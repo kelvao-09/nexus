@@ -1,61 +1,59 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Configuração da página
+# 1. Configuração da página (deve ser a primeira instrução)
 st.set_page_config(page_title="Nexus Dashboard", layout="wide")
 
-# --- CABEÇALHO COM BOTÃO INTEGRADO ---
-# Criamos colunas para posicionar o título à esquerda e o botão à direita no topo
-col_titulo, col_vazia, col_toggle = st.columns([3, 2, 1])
+# --- CABEÇALHO COM BOTÃO NO CANTO DIREITO ---
+# Criamos 3 colunas: uma para o título, uma grande vazia no meio e uma pequena para o botão
+col_titulo, col_espaco, col_switch = st.columns([2, 5, 1])
 
 with col_titulo:
     st.title("Nexus")
 
-with col_toggle:
-    # O botão fica no topo, simulando o switch da sua imagem
-    modo_noturno = st.toggle("Modo Noturno", value=False)
+with col_switch:
+    # O botão fica alinhado à direita, próximo aos ícones nativos do Streamlit
+    modo_noturno = st.toggle("Modo Noturno")
 
-# --- ESTILIZAÇÃO SOFISTICADA (CSS) ---
+# --- LÓGICA DE CORES SOFISTICADAS ---
 if modo_noturno:
-    # Cores para Modo Noturno: Fundo Grafite Profundo, Texto Branco Neve
+    # Paleta Escura: Fundo Anthracite, Texto Off-white e Destaques Suaves
     st.markdown("""
         <style>
         .stApp {
-            background-color: #121212;
-            color: #E0E0E0;
+            background-color: #1A1C20;
+            color: #F0F2F6;
         }
         [data-testid="stMetricValue"] {
             color: #FFFFFF !important;
         }
         [data-testid="stMetricLabel"] {
-            color: #B0B0B0 !important;
+            color: #A1A3A6 !important;
         }
         blockquote {
-            border-left: 5px solid #4F4F4F !important;
-            color: #BBBBBB !important;
-            background-color: #1E1E1E !important;
+            border-left: 5px solid #3E4452 !important;
+            background-color: #262930 !important;
+            color: #D1D5DB !important;
         }
-        /* Estilização da Tabela no Modo Escuro */
-        .stDataFrame div {
-            color: #E0E0E0 !important;
-        }
-        hr {
-            border-top: 1px solid #333333 !important;
+        /* Cor da tabela no modo escuro */
+        .stDataFrame {
+            border: 1px solid #3E4452;
         }
         </style>
         """, unsafe_allow_html=True)
 else:
-    # Cores para Modo Claro: Fundo Branco, Texto Cinza Escuro
+    # Paleta Clara: Visual limpo idêntico à sua captura de tela
     st.markdown("""
         <style>
         blockquote {
-            border-left: 5px solid #E0E0E0;
-            background-color: #F9F9F9;
+            border-left: 5px solid #E6E9EF;
+            background-color: #F8F9FB;
+            color: #555E6F;
         }
         </style>
         """, unsafe_allow_html=True)
 
-# --- CONTEÚDO DO DASHBOARD ---
+# --- CONTEÚDO ---
 
 # Justificativa do Nome
 st.markdown("""
@@ -66,39 +64,42 @@ st.markdown("""
 
 st.divider()
 
-# --- ÁREA DE METAS DA EQUIPE ---
+# --- SEÇÃO DE METAS ---
 st.header("Acompanhamento de Metas")
 
-meta_global = 100000
-alcancado = 75000
-progresso = alcancado / meta_global
+# Dados de exemplo
+meta_total = 100000.00
+alcancado = 75000.00
+progresso = alcancado / meta_total
 
-col1, col2, col3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
-with col1:
-    st.metric(label="Meta Total", value=f"R$ {meta_global:,.2f}")
+with c1:
+    st.metric(label="Meta Total", value=f"R$ {meta_total:,.2f}")
 
-with col2:
+with c2:
+    # Delta indica a porcentagem atingida de forma elegante
     st.metric(label="Alcançado", value=f"R$ {alcancado:,.2f}", delta=f"{progresso:.1%}")
 
-with col3:
+with c3:
     st.write("**Progresso da Equipe**")
-    # A barra de progresso do Streamlit já se adapta bem aos temas
     st.progress(progresso)
 
-# --- TABELA DE MEMBROS DA EQUIPE ---
+st.write("") # Espaçamento
+
+# --- TABELA DE DESEMPENHO ---
 st.subheader("Desempenho por Integrante")
 
-dados_equipe = pd.DataFrame({
+df = pd.DataFrame({
     "Integrante": ["Ana", "Bruno", "Carlos", "Daniela"],
     "Meta Individual": [25000, 25000, 25000, 25000],
     "Realizado": [22000, 18000, 25000, 10000],
 })
-dados_equipe["Status (%)"] = (dados_equipe["Realizado"] / dados_equipe["Meta Individual"]) * 100
+df["Status (%)"] = (df["Realizado"] / df["Meta Individual"]) * 100
 
-# Exibe a tabela
-st.dataframe(dados_equipe, use_container_width=True)
+# Exibição da tabela ocupando a largura total
+st.dataframe(df, use_container_width=True, hide_index=True)
 
-# Feedback visual de sucesso
-if progresso >= 0.75:
-    st.toast("Estamos no caminho certo para a meta Nexus!", icon="🚀")
+# Efeito final de celebração se a meta for atingida
+if progresso >= 1.0:
+    st.balloons()
