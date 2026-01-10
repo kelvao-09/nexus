@@ -1,13 +1,33 @@
 import streamlit as st
 import pandas as pd
 
-# Configuração da página
+# 1. Configuração da página (DEVE ser a primeira linha de comando Streamlit)
 st.set_page_config(page_title="Nexus Dashboard", layout="wide")
+
+# --- MODO NOTURNO (OPÇÃO NATIVA) ---
+# DICA: O Streamlit detecta o tema do Windows/Browser automaticamente.
+# Mas você pode forçar um botão de alternância visual se desejar.
+with st.sidebar:
+    st.title("Configurações")
+    tema = st.toggle("Ativar Modo Escuro Manual")
+
+# Se você quiser que o app mude cores específicas via código:
+if tema:
+    st.markdown("""
+        <style>
+        .stApp {
+            background-color: #0E1117;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+# --- CONTEÚDO DO DASHBOARD ---
 
 # Título Principal
 st.title("Nexus")
 
-# Justificativa do Nome (em itálico ou destaque)
+# Justificativa do Nome
 st.markdown("""
 > **NEXUS** representa a conexão essencial entre atenção, esforço e gentileza. 
 > É o elo que une nossa equipe, fortalecendo a colaboração e o comprometimento 
@@ -19,12 +39,10 @@ st.divider()
 # --- ÁREA DE METAS DA EQUIPE ---
 st.header("Acompanhamento de Metas")
 
-# Exemplo de dados (você poderá conectar a uma planilha depois)
 meta_global = 100000
 alcancado = 75000
 progresso = alcancado / meta_global
 
-# Exibição de Métricas em Colunas
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -40,7 +58,6 @@ with col3:
 # --- TABELA DE MEMBROS DA EQUIPE ---
 st.subheader("Desempenho por Integrante")
 
-# Criando um pequeno exemplo de tabela
 dados_equipe = pd.DataFrame({
     "Integrante": ["Ana", "Bruno", "Carlos", "Daniela"],
     "Meta Individual": [25000, 25000, 25000, 25000],
@@ -51,7 +68,6 @@ dados_equipe["Status (%)"] = (dados_equipe["Realizado"] / dados_equipe["Meta Ind
 
 st.dataframe(dados_equipe, use_container_width=True)
 
-# Mensagem motivacional baseada no nome Nexus
 if progresso >= 1.0:
     st.balloons()
     st.success("Excelente! O elo Nexus nos levou ao objetivo!")
