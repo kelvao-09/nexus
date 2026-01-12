@@ -5,34 +5,23 @@ from googleapiclient.discovery import build
 st.set_page_config(page_title="Oráculo", layout="wide")
 if 'h' not in st.session_state: st.session_state.h = []
 
-# Gatinho Elaborado que segue o mouse (Injeção Direta)
+# Gatinho que segue o mouse
 st.components.v1.html("""
-<div id="cat" style="position:fixed;width:50px;height:50px;pointer-events:none;z-index:9999;transition:0.1s;">
-    <img src="https://i.gifer.com/Vg7.gif" width="50">
-</div>
+<div id="k" style="position:fixed;pointer-events:none;z-index:999;transition:0.1s;"><img src="https://i.gifer.com/Vg7.gif" width="50"></div>
 <script>
-    const cat = document.getElementById('cat');
-    document.addEventListener('mousemove', (e) => {
-        cat.style.left = (e.pageX + 10) + 'px';
-        cat.style.top = (e.pageY + 10) + 'px';
-    });
-</script>
-""", height=0)
+document.addEventListener('mousemove',(e)=>{k=document.getElementById('k');k.style.left=(e.pageX+5)+'px';k.style.top=(e.pageY+5)+'px';});
+</script>""", height=0)
 
-st.markdown("""<style>
-@keyframes mv {0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
-.flt {font-size:70px;text-align:center;animation:mv 3s infinite;}
-</style>""", unsafe_allow_html=True)
+st.markdown("<style>@keyframes m{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}.f{font-size:60px;text-align:center;animation:m 3s infinite;}</style>", unsafe_allow_html=True)
 
 @st.cache_resource
 def get_s():
-    try:
-        if "google_auth" in st.secrets:
-            auth = st.secrets["google_auth"]
-            creds = service_account.Credentials.from_service_account_info(auth, scopes=['https://www.googleapis.com/auth/drive.readonly'])
-            return build('drive', 'v3', credentials=creds)
-    except: return None
+    if "google_auth" in st.secrets:
+        creds = service_account.Credentials.from_service_account_info(st.secrets["google_auth"], scopes=['https://www.googleapis.com/auth/drive.readonly'])
+        return build('drive', 'v3', credentials=creds)
     return None
 
 s = get_s()
-st.
+st.markdown('<div class="f">🔮</div><h2 style="text-align:center;">Oráculo</h2>', unsafe_allow_html=True)
+
+q = st.
