@@ -20,7 +20,7 @@ def get_drive_service():
             )
             return build('drive', 'v3', credentials=creds)
     except:
-        return None
+        pass
     return None
 
 service = get_drive_service()
@@ -28,10 +28,10 @@ service = get_drive_service()
 # 3. Interface Principal
 st.markdown("<h1 style='text-align: center;'>🔮 O Oráculo</h1>", unsafe_allow_html=True)
 
-# Campo de busca (Aba de pesquisa)
-busca = st.text_input("O que você deseja encontrar?", key="main_search")
+# Aba de pesquisa
+busca = st.text_input("O que você deseja encontrar?", key="input_principal")
 
-# 4. Lógica do Histórico (5 últimas)
+# 4. Lógica do Histórico (5 últimas pesquisas)
 if busca:
     if busca not in st.session_state.historico:
         st.session_state.historico.insert(0, busca)
@@ -40,10 +40,9 @@ if busca:
 # Exibir histórico como botões clicáveis
 if st.session_state.historico:
     st.write("🕒 **Buscas recentes:**")
-    cols = st.columns(len(st.session_state.historico))
+    cols_hist = st.columns(len(st.session_state.historico))
     for i, termo in enumerate(st.session_state.historico):
-        if cols[i].button(termo, key=f"h_{i}"):
-            # Ao clicar, fazemos a busca por esse termo
+        if cols_hist[i].button(termo, key=f"h_{i}"):
             busca = termo
 
 st.divider()
@@ -51,6 +50,7 @@ st.divider()
 # 5. Resultados da Busca
 if busca and service:
     try:
+        # Busca no Drive
         query = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
         res = service.files().list(q=query, fields="files(id, name, webViewLink)").execute()
         arquivos = res.get('files', [])
@@ -58,4 +58,13 @@ if busca and service:
         if arquivos:
             st.write(f"### Resultados para: {busca}")
             for arq in arquivos:
-                col_arq, col_link = st.columns
+                c1, c2 = st.columns([4, 1])
+                with c1:
+                    st.write(f"📄 {arq['name']}")
+                with c2:
+                    st.markdown(f"[Abrir ↗️]({arq['webViewLink']})")
+        else:
+            st.warning("Nenhum arquivo encontrado.")
+            
+    except Exception as e:
+        st.error(f"Erro na busca: {e}")
