@@ -5,11 +5,11 @@ from googleapiclient.discovery import build
 # 1. Configuração da Página
 st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 
-# Inicializar estrutura de pastas
+# Inicializar estrutura de pastas se não existir
 if 'pastas_fav' not in st.session_state:
     st.session_state.pastas_fav = {"Geral": []}
 
-# 2. CSS para visual sofisticado
+# 2. Estilo CSS
 st.markdown("""
 <style>
     .main { background-color: #f8f9fa; }
@@ -30,6 +30,11 @@ st.markdown("""
         font-weight: bold;
         display: inline-block;
         text-align: center;
+    }
+    .stPopover button {
+        border: none !important;
+        background: transparent !important;
+        font-size: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -69,7 +74,7 @@ with st.sidebar:
         
         with col_m:
             with st.popover("⋮"):
-                st.write(f"Configurar: {pasta}")
+                st.write(f"Opções: {pasta}")
                 novo_n = st.text_input("Renomear:", value=pasta, key=f"re_{pasta}")
                 if st.button("Salvar Nome", key=f"sv_{pasta}"):
                     st.session_state.pastas_fav[novo_n] = st.session_state.pastas_fav.pop(pasta)
@@ -89,34 +94,3 @@ with st.sidebar:
                     
                     c_mov, c_rem = st.columns([3, 1])
                     with c_mov:
-                        outras = [p for p in st.session_state.pastas_fav.keys() if p != pasta]
-                        if outras:
-                            dest = st.selectbox("Mover:", outras, key=f"mv_{pasta}_{idx}")
-                            if st.button("OK", key=f"bt_mv_{pasta}_{idx}"):
-                                st.session_state.pastas_fav[dest].append(st.session_state.pastas_fav[pasta].pop(idx))
-                                st.rerun()
-                    with c_rem:
-                        if st.button("❌", key=f"rm_{pasta}_{idx}"):
-                            st.session_state.pastas_fav[pasta].pop(idx)
-                            st.rerun()
-
-# 5. Interface Principal (Pesquisa Centralizada)
-st.markdown("<h1 style='text-align: center;'>🔮 O Oráculo</h1>", unsafe_allow_html=True)
-
-# Centralizar barra de pesquisa
-c1, c2, c3 = st.columns([1, 2, 1])
-with c2:
-    busca = st.text_input("Pesquisar:", placeholder="Digite o que deseja encontrar...", label_visibility="collapsed")
-
-# 6. Resultados da Busca
-if busca and service:
-    try:
-        q = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
-        res = service.files().list(q=q, fields="files(id, name, webViewLink)").execute()
-        arquivos = res.get('files', [])
-
-        if arquivos:
-            for i, f in enumerate(arquivos):
-                with st.container():
-                    col_info, col_fav = st.columns([3, 2])
-                    with col_info:
