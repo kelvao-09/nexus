@@ -61,3 +61,16 @@ if busca and service:
                                     border-radius: 8px;
                                     cursor: pointer;
                                     font-weight: bold;
+                                    width: 100%;">
+                                    Abrir Documento
+                                </button>
+                            </a>
+                        """, unsafe_allow_html=True)
+                    st.divider()
+        else:
+            st.warning(f"Nenhum documento encontrado contendo '{busca}'.")
+            
+    except Exception as e:
+        st.error(f"Erro ao processar a busca: {e}")
+else:
+    st.info("💡 Dica: Você não precisa digitar o nome inteiro, apenas uma palavra-chave.")
