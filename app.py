@@ -61,12 +61,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Autenticação Drive (Linhas quebradas para evitar erros)
+# 3. Autenticação Drive (Linhas encurtadas para evitar cortes)
 @st.cache_resource
 def get_drive_service():
-    try:
-        if "google_auth" in st.secrets:
-            info = st.secrets["google_auth"]
-            creds = service_account.Credentials.from_service_account_info(
-                info, 
-                scopes=['
