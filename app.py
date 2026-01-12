@@ -9,31 +9,39 @@ st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 if 'pastas_fav' not in st.session_state:
     st.session_state.pastas_fav = {"Geral": []}
 
-# 2. Estilo CSS
+# 2. Estilo CSS para máxima sofisticação
 st.markdown("""
 <style>
+    .main { background-color: #f8f9fa; }
+    
+    /* Card de Favorito na Sidebar */
     .fav-item {
         background: #ffffff;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 5px;
-        border-left: 4px solid #FFD700;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        border-left: 4px solid #4285F4;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
     }
-    .folder-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
+    
+    /* Título das Pastas */
+    .folder-label {
+        font-weight: bold;
+        font-size: 16px;
+        color: #333;
     }
+
+    /* Botão de Visualizar na pesquisa */
     .btn-open {
         background-color: #4285F4;
         color: white !important;
-        padding: 5px 10px;
-        border-radius: 5px;
+        padding: 8px 15px;
+        border-radius: 6px;
         text-decoration: none;
         font-weight: bold;
-        font-size: 12px;
+        font-size: 13px;
+        display: inline-block;
+        text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -51,29 +59,8 @@ def get_drive_service():
 
 service = get_drive_service()
 
-# 4. Barra Lateral: Gerenciamento com "Três Pontinhos"
+# 4. Barra Lateral: Gerenciamento de Pastas (Onde estão os ⋮)
 with st.sidebar:
-    st.header("📂 Suas Pastas")
+    st.markdown("# 📂 Pastas")
     
-    # Criar nova pasta
-    with st.popover("➕ Nova Pasta"):
-        nome_n = st.text_input("Nome da pasta:")
-        if st.button("Criar"):
-            if nome_n and nome_n not in st.session_state.pastas_fav:
-                st.session_state.pastas_fav[nome_n] = []
-                st.rerun()
-
-    st.divider()
-
-    # Listagem de Pastas
-    for pasta in list(st.session_state.pastas_fav.keys()):
-        col_folder, col_menu = st.columns([5, 1])
-        
-        with col_folder:
-            # O expander agora serve apenas para ver os arquivos
-            exp = st.expander(f"📁 {pasta}")
-        
-        with col_menu:
-            # O "Menu de Três Pontinhos" usando Popover
-            with st.popover("⋮"):
-                st.markdown(f"**Editar: {pasta}**")
+    # Criar nova pasta de
