@@ -53,7 +53,7 @@ def get_drive_service():
 
 service = get_drive_service()
 
-# 4. Barra Lateral (Pastas e Menu ⋮)
+# 4. Barra Lateral (Favoritos e Menu ⋮)
 with st.sidebar:
     st.title("📂 Favoritos")
     
@@ -74,7 +74,7 @@ with st.sidebar:
         
         with col_m:
             with st.popover("⋮"):
-                st.write(f"Opções: {pasta}")
+                st.write(f"Configurar: {pasta}")
                 novo_n = st.text_input("Renomear:", value=pasta, key=f"re_{pasta}")
                 if st.button("Salvar Nome", key=f"sv_{pasta}"):
                     st.session_state.pastas_fav[novo_n] = st.session_state.pastas_fav.pop(pasta)
@@ -94,3 +94,5 @@ with st.sidebar:
                     
                     c_mov, c_rem = st.columns([3, 1])
                     with c_mov:
+                        # Bloco que estava causando erro corrigido aqui
+                        outras = [p for p in st.session_state.
