@@ -11,3 +11,8 @@ google-auth-oauthlib
 google-auth-httplib2
 streamlit
 google-generativeai
+google-generativeai
+google-api-python-client
+google-auth
+streamlit
+PyPDF2
