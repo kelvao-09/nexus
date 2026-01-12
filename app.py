@@ -2,14 +2,14 @@ import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# 1. Configuração Principal
+# 1. Configuração de Interface
 st.set_page_config(page_title="Oráculo", page_icon="🔮", layout="wide")
 
-# Inicializar histórico
+# Inicializar histórico na sessão
 if 'historico' not in st.session_state:
     st.session_state.historico = []
 
-# 2. Estilos CSS (Corrigido e Fechado)
+# 2. Design de Interface (CSS Sofisticado)
 st.markdown("""
 <style>
     .stApp { background-color: #F8F9FA; }
@@ -40,74 +40,3 @@ st.markdown("""
         background-color: #4285F4; color: white !important;
         text-decoration: none !important; padding: 8px 20px;
         border-radius: 6px; font-weight: 500;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# 3. Autenticação Drive
-@st.cache_resource
-def get_drive_service():
-    try:
-        if "google_auth" in st.secrets:
-            info = st.secrets["google_auth"]
-            sc = ['https://www.googleapis.com/auth/drive.readonly']
-            creds = service_account.Credentials.from_service_account_info(info, scopes=sc)
-            return build('drive', 'v3', credentials=creds)
-    except: return None
-    return None
-
-service = get_drive_service()
-
-# 4. Título e Barra de Pesquisa
-st.markdown('<h1 class="main-title">🔮 Oráculo</h1>', unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #70757A; margin-bottom: 2rem;'>Busca Inteligente</p>", unsafe_allow_html=True)
-
-c1, c2, c3 = st.columns([1, 2, 1])
-with c2:
-    busca = st.text_input("Busca", placeholder="O que deseja encontrar?", label_visibility="collapsed")
-    
-    # Histórico de Pesquisa e Botão Limpar
-    if st.session_state.historico:
-        st.write("")
-        n_tags = len(st.session_state.historico)
-        # Colunas para tags + lixeira
-        cols = st.columns([1] * n_tags + [0.4])
-        
-        for i, termo in enumerate(st.session_state.historico):
-            if cols[i].button(termo, key=f"h_{i}"):
-                busca = termo
-        
-        # Botão Limpar Sofisticado
-        if cols[-1].button("🗑️", help="Limpar histórico"):
-            st.session_state.historico = []
-            st.rerun()
-
-# Lógica do Histórico
-if busca and busca not in st.session_state.historico:
-    st.session_state.historico.insert(0, busca)
-    st.session_state.historico = st.session_state.historico[:5]
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 5. Resultados
-if busca and service:
-    try:
-        q = f"name contains '{busca}' and trashed = false"
-        res = service.files().list(q=q, fields="files(id, name, webViewLink)").execute()
-        arquivos = res.get('files', [])
-
-        if arquivos:
-            for arq in arquivos:
-                st.markdown(f"""
-                <div class="result-card">
-                    <div>
-                        <div style="color: #1A73E8; font-weight: 500; font-size: 1.1rem;">📄 {arq['name']}</div>
-                        <div style="color: #70757A; font-size: 0.85rem;">Google Drive</div>
-                    </div>
-                    <a href="{arq['webViewLink']}" target="_blank" class="btn-visualizar">Abrir</a>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("Nenhum arquivo encontrado.")
-    except Exception:
-        st.error("Erro na comunicação com o Drive.")
