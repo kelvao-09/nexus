@@ -48,15 +48,15 @@ def get_svc():
 
 svc = get_svc()
 
-# 3. Interface Principal com Ícone Animado
+# 3. Interface Principal
 st.markdown('<div class="floating-icon">🔮</div>', unsafe_allow_html=True)
 st.markdown("<h1 style='text-align: center; margin-top: -20px;'>O Oráculo</h1>", unsafe_allow_html=True)
 
 c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
-    busca = st.text_input("Busca", placeholder="Pesquisar arquivo...", key="main_input", label_visibility="collapsed")
+    busca = st.text_input("Busca", placeholder="Pesquisar...", key="main_in", label_visibility="collapsed")
     
-    # Histórico clicável (Código encurtado para evitar erros)
+    # Histórico clicável
     if st.session_state.hist:
         st.write("")
         h_list = st.session_state.hist
@@ -68,7 +68,20 @@ with c2:
             st.session_state.hist = []
             st.rerun()
 
-# 4. Lógica do Histórico
+# 4. Lógica do Histórico (Linha encurtada para evitar AttributeError)
 if busca and busca not in st.session_state.hist:
     st.session_state.hist.insert(0, busca)
-    st.session_state.hist = st.session
+    st.session_state.hist = st.session_state.hist[:5]
+
+# 5. Resultados (Apenas Arquivos)
+if busca and svc:
+    try:
+        q = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
+        res = svc.files().list(q=q, fields="files(id, name, webViewLink)").execute()
+        files = res.get('files', [])
+        
+        if files:
+            st.markdown("<br>", unsafe_allow_html=True)
+            for f in files:
+                st.markdown(f"""
+                <div class
