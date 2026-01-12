@@ -3,8 +3,9 @@ import google.generativeai as genai
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 st.set_page_config(page_title="Oráculo", layout="wide")
-# --- CONFIGS ---
-ak, au = st.secrets.get("gemini_api"), st.secrets.get("google_auth")
+# --- SEGREDOS ---
+ak = st.secrets.get("gemini_api")
+au = st.secrets.get("google_auth")
 if ak:
     genai.configure(api_key=ak)
     md = genai.GenerativeModel('gemini-1.5-flash')
@@ -24,8 +25,3 @@ with t2:
     if au:
         c = service_account.Credentials.from_service_account_info(au, scopes=['https://www.googleapis.com/auth/drive.readonly'])
         s = build('drive', 'v3', credentials=c)
-        q = st.text_input("Buscar nome:")
-        if q:
-            # LINHA COMPACTA PARA EVITAR CORTE
-            f = f"name contains '{q}' and trashed=false"
-            res = s.files().list(q=f, fields="files(name,webViewLink)").execute().get('files',
