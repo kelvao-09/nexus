@@ -5,9 +5,9 @@ from googleapiclient.discovery import build
 st.set_page_config(page_title="Oráculo", layout="wide")
 if 'h' not in st.session_state: st.session_state.h = []
 
-# Gatinho que segue o mouse o tempo todo
+# GATINHO EMOJI QUE SEGUE O MOUSE (Sem depender de links externos)
 st.components.v1.html("""
-<div id="k" style="position:fixed;pointer-events:none;z-index:999;left:0;top:0;"><img src="https://i.gifer.com/Vg7.gif" width="50"></div>
+<div id="k" style="position:fixed;pointer-events:none;z-index:999;left:0;top:0;font-size:40px;">🐈</div>
 <script>
 document.addEventListener('mousemove',(e)=>{
   const k=document.getElementById('k');
