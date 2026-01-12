@@ -22,89 +22,20 @@ st.markdown("""
         border: 1px solid #E0E0E0 !important;
         box-shadow: 0 2px 10px rgba(0,0,0,0.03) !important;
     }
+    /* Tags de Histórico */
     div.stButton > button {
         border-radius: 20px !important; background-color: #E8EAED !important;
         color: #5F6368 !important; border: none !important;
         padding: 4px 15px !important; font-size: 0.85rem !important;
+        transition: 0.3s;
     }
     div.stButton > button:hover {
         background-color: #4285F4 !important; color: white !important;
     }
-    .result-card {
-        background: white; padding: 1.2rem; border-radius: 12px;
-        margin-bottom: 1rem; border: 1px solid #EEE;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        display: flex; justify-content: space-between; align-items: center;
+    /* Botão Limpar Especial */
+    .clear-btn button {
+        background-color: transparent !important;
+        color: #999 !important; border: 1px solid #EEE !important;
     }
-    .btn-visualizar {
-        background-color: #4285F4; color: white !important;
-        text-decoration: none !important; padding: 8px 20px;
-        border-radius: 6px; font-weight: 500;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# 3. Autenticação Drive (Linhas curtas para evitar cortes)
-@st.cache_resource
-def get_drive_service():
-    try:
-        if "google_auth" in st.secrets:
-            auth_info = st.secrets["google_auth"]
-            # Escopo reduzido para evitar erro de string aberta
-            sc = ['https://www.googleapis.com/auth/drive.readonly']
-            creds = service_account.Credentials.from_service_account_info(
-                auth_info, scopes=sc
-            )
-            return build('drive', 'v3', credentials=creds)
-    except:
-        return None
-    return None
-
-service = get_drive_service()
-
-# 4. Título e Barra de Pesquisa
-st.markdown('<h1 class="main-title">🔮 Oráculo</h1>', unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #70757A; margin-bottom: 2rem;'>Inteligência e Busca de Documentos</p>", unsafe_allow_html=True)
-
-c1, c2, c3 = st.columns([1, 2, 1])
-with c2:
-    # Campo de busca principal
-    busca = st.text_input("Busca", placeholder="O que deseja encontrar?", label_visibility="collapsed")
-    
-    # Histórico de Pesquisa (Tags Clicáveis)
-    if st.session_state.historico:
-        st.write("")
-        hist_cols = st.columns(len(st.session_state.historico))
-        for i, termo in enumerate(st.session_state.historico):
-            if hist_cols[i].button(termo, key=f"h_{i}"):
-                busca = termo
-
-# Salvar no histórico
-if busca and busca not in st.session_state.historico:
-    st.session_state.historico.insert(0, busca)
-    st.session_state.historico = st.session_state.historico[:5]
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 5. Resultados (Design de Card Profissional)
-if busca and service:
-    try:
-        q = f"name contains '{busca}' and trashed = false"
-        res = service.files().list(q=q, fields="files(id, name, webViewLink)").execute()
-        arquivos = res.get('files', [])
-
-        if arquivos:
-            for arq in arquivos:
-                st.markdown(f"""
-                <div class="result-card">
-                    <div>
-                        <div style="color: #1A73E8; font-weight: 500; font-size: 1.1rem;">📄 {arq['name']}</div>
-                        <div style="color: #70757A; font-size: 0.85rem;">Google Drive Document</div>
-                    </div>
-                    <a href="{arq['webViewLink']}" target="_blank" class="btn-visualizar">Abrir</a>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("Nenhum arquivo encontrado.")
-    except Exception as e:
-        st.error("Erro na comunicação com o Drive.")
+    .clear-btn button:hover {
+        border-color: #FF4B4B !important; color: #FF4B4B !important;
