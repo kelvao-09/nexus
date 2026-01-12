@@ -2,37 +2,38 @@ import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
+# 1. Configuração da Página
 st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 
-# 1. INICIALIZAR ESTRUTURA DE PASTAS (Memória da Sessão)
+# Inicializar estrutura de pastas nos favoritos se não existir
 if 'pastas_fav' not in st.session_state:
-    # Estrutura inicial: Geral e uma lista de nomes de pastas
     st.session_state.pastas_fav = {"Geral": []}
 
-# 2. ESTILO CSS
+# 2. Estilo CSS para Cards e Favoritos
 st.markdown("""
 <style>
     .fav-item {
         background: #ffffff;
-        padding: 8px;
-        border-radius: 5px;
-        margin-bottom: 5px;
-        border-left: 3px solid #FFD700;
-        font-size: 13px;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border-left: 4px solid #FFD700;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
     }
     .btn-open {
         background-color: #4285F4;
         color: white !important;
-        padding: 5px 10px;
+        padding: 6px 12px;
         border-radius: 5px;
         text-decoration: none;
         font-weight: bold;
-        font-size: 12px;
+        font-size: 13px;
+        display: inline-block;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. AUTENTICAÇÃO DRIVE
+# 3. Autenticação Drive
 @st.cache_resource
 def get_drive_service():
     try:
@@ -41,43 +42,25 @@ def get_drive_service():
             creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
         )
         return build('drive', 'v3', credentials=creds)
-    except: return None
+    except Exception:
+        return None
 
 service = get_drive_service()
 
-# 4. SIDEBAR: ORGANIZAÇÃO EM PASTAS
+# 4. Sidebar: Gerenciamento de Pastas
 with st.sidebar:
-    st.header("📂 Pastas de Favoritos")
+    st.header("📂 Minhas Pastas")
     
-    # Criar Nova Pasta
-    nova_pasta = st.text_input("Nome da nova pasta:")
-    if st.button("Criar Pasta") and nova_pasta:
-        if nova_pasta not in st.session_state.pastas_fav:
-            st.session_state.pastas_fav[nova_pasta] = []
-            st.rerun()
+    # Criar nova pasta
+    with st.form("nova_pasta_form", clear_on_submit=True):
+        nome_n_pasta = st.text_input("Nova pasta:")
+        if st.form_submit_button("Criar"):
+            if nome_n_pasta and nome_n_pasta not in st.session_state.pastas_fav:
+                st.session_state.pastas_fav[nome_n_pasta] = []
+                st.rerun()
 
     st.divider()
 
-    # Exibição das Pastas e Conteúdo
+    # Exibir pastas e conteúdos
     for pasta, itens in st.session_state.pastas_fav.items():
         with st.expander(f"📁 {pasta} ({len(itens)})"):
-            if not itens:
-                st.write("Vazia")
-            for item in itens:
-                st.markdown(f'<div class="fav-item"><b>{item["name"]}</b><br><a href="{item["link"]}" target="_blank">Abrir ↗️</a></div>', unsafe_allow_html=True)
-            
-            if st.button(f"Esvaziar {pasta}", key=f"clear_{pasta}"):
-                st.session_state.pastas_fav[pasta] = []
-                st.rerun()
-
-# 5. BUSCA E RESULTADOS
-st.title("🔮 Oráculo")
-c1, c2, c3 = st.columns([1,2,1])
-with c2:
-    busca = st.text_input("Pesquisar documento:", placeholder="Ex: Manual...")
-
-if busca and service:
-    try:
-        q = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
-        res = service.files().list(q=q, fields="files(id, name, webViewLink, mimeType)").execute()
-        files = res.get
