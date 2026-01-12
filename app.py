@@ -8,7 +8,7 @@ st.set_page_config(page_title="Oráculo", page_icon="🔮", layout="wide")
 if 'historico' not in st.session_state:
     st.session_state.historico = []
 
-# 2. CSS Estilizado
+# 2. Estilos CSS
 st.markdown("""
 <style>
     .stApp { background-color: #F8F9FA; }
@@ -17,7 +17,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Conexão Segura
+# 3. Conexão Segura com Google Drive
 @st.cache_resource
 def get_service():
     try:
@@ -32,19 +32,24 @@ def get_service():
 service = get_service()
 
 # 4. Interface Principal
-st.markdown("<h1 style='text-align: center;'>🔮 Oráculo</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🔮 O Oráculo</h1>", unsafe_allow_html=True)
 
 c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
     busca = st.text_input("Busca", placeholder="O que deseja encontrar?", label_visibility="collapsed")
+    
+    # Histórico de Pesquisa
     if st.session_state.historico:
         st.write("")
         cols = st.columns(len(st.session_state.historico) + 1)
         for i, termo in enumerate(st.session_state.historico):
             if cols[i].button(termo, key=f"h_{i}"):
                 busca = termo
+        # Botão para limpar histórico
         if cols[-1].button("🗑️"):
             st.session_state.historico = []
             st.rerun()
 
-if busca and busca not in st.session_state.historico:
+# 5. Lógica do Histórico (CORRIGIDA)
+if busca:
+    if busca
