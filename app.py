@@ -1,50 +1,42 @@
 import streamlit as st
 import os
 
-# 1. Configurações Iniciais da Página
-st.set_page_config(
-    page_title="Oráculo de Suporte",
-    page_icon="🔮",
-    layout="centered"
-)
+# Configurações básicas
+st.set_page_config(page_title="Oráculo", page_icon="🔮")
 
-# 2. Estilização CSS para centralizar e melhorar o visual
-st.markdown("""
-    <style>
-    .main {
-        text-align: center;
-    }
-    .stTextInput {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    .stDownloadButton {
-        text-align: center;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+st.title("🔮 Oráculo de Documentos")
 
-# 3. Título e Cabeçalho
-st.title("🔮 Oráculo de Conhecimento")
-st.write("Digite o nome do problema ou do documento que você precisa encontrar.")
-
-# 4. Configuração da Pasta (Verifique se no GitHub o nome é exatamente este)
+# Nome da pasta (verifique se está igual no GitHub)
 PASTA_DOCS = "documentos"
 
-# 5. Campo de Pesquisa Centralizado
-busca = st.text_input("", placeholder="Ex: lentidão, rede, acesso, erro...")
+# Barra de pesquisa
+busca = st.text_input("O que você deseja encontrar?", placeholder="Digite aqui...")
 
-st.markdown("---") # Linha divisória
-
-# 6. Lógica de Busca e Exibição
 if busca:
-    # Verifica se a pasta existe no repositório
+    # Verifica se a pasta existe
     if os.path.exists(PASTA_DOCS):
-        # Lista todos os arquivos dentro da pasta
-        todos_arquivos = os.listdir(PASTA_DOCS)
+        arquivos = os.listdir(PASTA_DOCS)
         
-        # Filtra os arquivos com base na busca (ignora maiúsculas/minúsculas)
-        resultados = [f for f in todos_arquivos if busca.lower() in f.lower()]
+        # Filtra os arquivos (procura o termo digitado no nome do arquivo)
+        resultados = [f for f in arquivos if busca.lower() in f.lower()]
         
         if resultados:
-            st.success
+            st.write(f"### ✅ Encontrei {len(resultados)} resultado(s):")
+            
+            for nome_arquivo in resultados:
+                caminho_completo = os.path.join(PASTA_DOCS, nome_arquivo)
+                
+                # Botão de Download
+                with open(caminho_completo, "rb") as f:
+                    st.download_button(
+                        label=f"Baixar: {nome_arquivo}",
+                        data=f.read(),
+                        file_name=nome_arquivo,
+                        key=nome_arquivo # Importante para não dar erro de botões duplicados
+                    )
+        else:
+            st.warning("Nenhum documento encontrado com esse nome.")
+    else:
+        st.error(f"Erro: A pasta '{PASTA_DOCS}' não foi encontrada no repositório.")
+else:
+    st.info("Digite uma palavra-chave para começar a busca.")
