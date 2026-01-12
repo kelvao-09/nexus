@@ -5,17 +5,20 @@ from googleapiclient.discovery import build
 st.set_page_config(page_title="Oráculo", layout="wide")
 if 'h' not in st.session_state: st.session_state.h = []
 
-# GATINHO EMOJI QUE SEGUE O MOUSE (Sem depender de links externos)
-st.components.v1.html("""
-<div id="k" style="position:fixed;pointer-events:none;z-index:999;left:0;top:0;font-size:40px;">🐈</div>
+# Injeção Direta de CSS e JS (Gatinho 🐈)
+st.markdown("""
+<div id="cat" style="position:fixed;pointer-events:none;z-index:9999;font-size:40px;left:0;top:0;">🐈</div>
+<style>
+    @keyframes m{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+    .f{font-size:60px;text-align:center;animation:m 3s infinite;}
+</style>
 <script>
-document.addEventListener('mousemove',(e)=>{
-  const k=document.getElementById('k');
-  k.style.transform=`translate(${e.clientX+5}px,${e.clientY+5}px)`;
-});
-</script>""", height=0)
-
-st.markdown("<style>@keyframes m{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}.f{font-size:60px;text-align:center;animation:m 3s infinite;}</style>", unsafe_allow_html=True)
+    document.addEventListener('mousemove', function(e) {
+        var cat = document.getElementById('cat');
+        cat.style.transform = 'translate(' + (e.clientX + 10) + 'px, ' + (e.clientY + 10) + 'px)';
+    });
+</script>
+""", unsafe_allow_html=True)
 
 @st.cache_resource
 def get_s():
@@ -25,7 +28,7 @@ def get_s():
 
 s, h = get_s(), st.session_state.h
 st.markdown('<div class="f">🔮</div><h2 style="text-align:center;">Oráculo</h2>', unsafe_allow_html=True)
-q = st.text_input("S", placeholder="O que busca?", label_visibility="collapsed")
+q = st.text_input("Busca", placeholder="O que busca?", label_visibility="collapsed")
 
 if q:
     if q not in h: h.insert(0,q); st.session_state.h=h[:5]
@@ -33,5 +36,6 @@ if q:
         try:
             filt = f"name contains '{q}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
             res = s.files().list(q=filt, fields="files(name, webViewLink)").execute()
-            for f in res.get('files', []): st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
+            for f in res.get('files', []):
+                st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
         except: st.error("Erro")
