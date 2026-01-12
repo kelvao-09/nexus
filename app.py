@@ -5,7 +5,7 @@ from googleapiclient.discovery import build
 # 1. Configuração da Página
 st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 
-# Inicializar estrutura de pastas (Memória da Sessão)
+# Inicializar estrutura de pastas
 if 'pastas_fav' not in st.session_state:
     st.session_state.pastas_fav = {"Geral": []}
 
@@ -31,7 +31,6 @@ st.markdown("""
         display: inline-block;
         text-align: center;
     }
-    /* Estilo para o menu ⋮ */
     .stPopover button {
         border: none !important;
         background: transparent !important;
@@ -62,13 +61,4 @@ with st.sidebar:
     st.title("📂 Favoritos")
     
     with st.popover("➕ Nova Pasta", use_container_width=True):
-        n_nome = st.text_input("Nome da pasta:", key="input_new_folder")
-        if st.button("Criar"):
-            if n_nome and n_nome not in st.session_state.pastas_fav:
-                st.session_state.pastas_fav[n_nome] = []
-                st.rerun()
-    
-    st.divider()
-
-    # Listagem de Pastas
-    lista_pastas = list(st.session_state.pastas
+        n_nome = st.text_input("Nome da pasta:", key="new_f_input")
