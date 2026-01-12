@@ -2,7 +2,7 @@ import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-st.set_page_config(page_title="Oráculo", page_icon="🔮")
+st.set_page_config(page_title="Oráculo Total", page_icon="🔮", layout="wide")
 
 @st.cache_resource
 def get_drive_service():
@@ -19,35 +19,33 @@ def get_drive_service():
 
 service = get_drive_service()
 
-st.title("🔮 Oráculo")
-busca = st.text_input("O que deseja consultar?", placeholder="Ex: Manual")
+st.title("🔮 Oráculo Inteligente")
+st.write("Digite qualquer parte do nome do arquivo (ex: 'jogo', 'rede', 'analise')")
+
+# Campo de pesquisa
+busca = st.text_input("O que você procura?", placeholder="Digite aqui...")
 
 if busca and service:
     try:
-        # Removi a trava de 'parents' para testar o acesso total
+        # Removi a restrição de pasta 'parents' para que ele vasculhe TUDO 
+        # o que você compartilhou com o e-mail da Service Account.
+        # O 'contains' garante que ache "jogo" dentro de "análise de jogos".
         query = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
         
         results = service.files().list(
             q=query,
-            fields="files(id, name, webViewLink)",
-            pageSize=10
+            fields="files(id, name, webViewLink, mimeType)",
+            pageSize=20 # Aumentei para mostrar mais resultados de uma vez
         ).execute()
         
         arquivos = results.get('files', [])
 
         if arquivos:
-            st.write(f"### ✅ Documentos encontrados:")
-            for arq in arquivos:
-                st.markdown(f"""
-                    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px; background-color:#f9f9f9">
-                        <p style='margin:0'><strong>{arq['name']}</strong></p>
-                        <a href="{arq['webViewLink']}" target="_blank" style="color: #4285F4; text-decoration: none; font-weight: bold;">
-                            Abrir Documento Agora ↗️
-                        </a>
-                    </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.warning("O Oráculo não encontrou nenhum arquivo com esse nome. Verifique se o arquivo foi compartilhado com o e-mail da API.")
+            st.success(f"Encontrei {len(arquivos)} documento(s) relacionado(s) a '{busca}':")
             
-    except Exception as e:
-        st.error(f"Erro na busca: {e}")
+            # Criando uma grade de resultados
+            for arq in arquivos:
+                with st.container():
+                    col1, col2 = st.columns([4, 1])
+                    with col1:
+                        # Mostra o nome completo
