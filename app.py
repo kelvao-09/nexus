@@ -4,42 +4,23 @@ from googleapiclient.discovery import build
 
 st.set_page_config(page_title="Oráculo", layout="wide")
 
-# Interface de Controle do Gatinho
-st.sidebar.markdown("### 🎮 Controle o Gato")
-x = st.sidebar.slider("Horizontal", -100, 1500, 1200)
-y = st.sidebar.slider("Vertical", -100, 800, 600)
-
-# CSS para posicionar o gatinho conforme os sliders
-st.markdown(f"""
-<style>
-    .cat-player {{
-        position: fixed;
-        left: {x}px;
-        top: {y}px;
-        font-size: 60px;
-        z-index: 9999;
-        transition: 0.2s ease-out;
-        pointer-events: none;
-    }}
-    @keyframes f {{0%,100%{{transform:translateY(0)}} 50%{{transform:translateY(-15px)}}}}
-    .b {{font-size:70px;text-align:center;animation:f 3s infinite;}}
-</style>
-<div class="cat-player">🐈‍⬛</div>
+# O Gatinho com lógica de Foco e Movimento
+st.markdown("""
+<div id="g" tabindex="0" style="position:fixed;bottom:20px;right:20px;font-size:60px;z-index:9999;outline:none;cursor:pointer;transition:0.1s;">🐈‍⬛</div>
+<script>
+const el=document.getElementById('g');let x=0,y=0;
+el.onkeydown=(e)=>{
+ if(e.key=='ArrowUp')y-=30;if(e.key=='ArrowDown')y+=30;
+ if(e.key=='ArrowLeft')x-=30;if(e.key=='ArrowRight')x+=30;
+ el.style.transform=`translate(${x}px,${y}px)`;e.preventDefault();
+};
+// Garante que o clique mude o foco para o gatinho
+el.onclick=()=>{el.focus();};
+</script>
+<style>@keyframes f{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}.b{font-size:70px;text-align:center;animation:f 3s infinite;}</style>
 """, unsafe_allow_html=True)
 
 @st.cache_resource
 def get_s():
-    if "google_auth" in st.secrets:
-        return build('drive','v3',credentials=service_account.Credentials.from_service_account_info(st.secrets["google_auth"],scopes=['https://www.googleapis.com/auth/drive.readonly']))
-    return None
-
-s = get_s()
-st.markdown('<div class="b">🔮</div><h2 style="text-align:center;">Oráculo</h2>', unsafe_allow_html=True)
-q = st.text_input("S", placeholder="Busque aqui...", label_visibility="collapsed")
-
-if q and s:
-    try:
-        r = s.files().list(q=f"name contains '{q}' and trashed=false", fields="files(name,webViewLink,mimeType)").execute().get('files', [])
-        for i in r:
-            if 'folder' not in i['mimeType']: st.markdown(f"📄 **[{i['name']}]({i['webViewLink']})**")
-    except: st.error("!")
+ if "google_auth" in st.secrets:
+  return build('drive','v3',credentials=service_account.Credentials.from_service_account_info(st.secrets["google_auth"],scopes=['
