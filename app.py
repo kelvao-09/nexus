@@ -5,28 +5,24 @@ from googleapiclient.discovery import build
 st.set_page_config(page_title="Oráculo", page_icon="🔮", layout="wide")
 if 'h' not in st.session_state: st.session_state.h = []
 
-# CSS Minimalista Animado
+# CSS Compacto com Animação de Levitação
 st.markdown("""<style>
 @keyframes mv {0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
 .flt {font-size:70px;text-align:center;animation:mv 3s infinite;}
-.stButton>button {border-radius:20px;padding:2px 10px;font-size:12px;}
+.card {background:white;padding:12px;border-radius:10px;border:1px solid #EEE;margin-bottom:8px;}
 </style>""", unsafe_allow_html=True)
 
-# Conexão Drive
 @st.cache_resource
 def get_s():
     try:
         if "google_auth" in st.secrets:
-            info = st.secrets["google_auth"]
-            sc = ['https://www.googleapis.com/auth/drive.readonly']
-            creds = service_account.Credentials.from_service_account_info(info, scopes=sc)
+            auth = st.secrets["google_auth"]
+            creds = service_account.Credentials.from_service_account_info(auth, scopes=['https://www.googleapis.com/auth/drive.readonly'])
             return build('drive', 'v3', credentials=creds)
     except: return None
     return None
 
 s = get_s()
-
-# Interface
 st.markdown('<div class="flt">🔮</div>', unsafe_allow_html=True)
 st.markdown("<h2 style='text-align:center;'>O Oráculo</h2>", unsafe_allow_html=True)
 
@@ -41,11 +37,18 @@ with c2:
             st.session_state.h = []; st.rerun()
 
 if q_in and q_in not in st.session_state.h:
-    st.session_state.h.insert(0, q_in)
-    st.session_state.h = st.session_state.h[:5]
+    st.session_state.h.insert(0, q_in); st.session_state.h = st.session_state.h[:5]
 
-# Busca (Filtrada para ARQUIVOS apenas)
+# Busca em linha única para evitar SyntaxError por corte de código
 if q_in and s:
     try:
-        query = f"name contains '{q_in}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
-        res = s.files().list(q=query,
+        q = f"name contains '{q_in}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
+        # Execução direta em uma linha curta
+        res = s.files().list(q=q, fields="files(id, name, webViewLink)").execute()
+        items = res.get('files', [])
+        if items:
+            st.write("---")
+            for f in items:
+                st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
+        else: st.info("Nada encontrado.")
+    except: st.error("Erro na busca.")
