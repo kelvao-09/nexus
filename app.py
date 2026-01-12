@@ -28,26 +28,22 @@ service = get_drive_service()
 # 3. Interface Principal
 st.markdown("<h1 style='text-align: center;'>🔮 O Oráculo</h1>", unsafe_allow_html=True)
 
-# Campo de busca
-busca = st.text_input("O que você deseja encontrar?", key="input_busca")
+# Campo de busca (Aba de pesquisa)
+busca = st.text_input("O que você deseja encontrar?", key="main_search")
 
-# 4. Lógica do Histórico (Gerenciar as 5 últimas)
+# 4. Lógica do Histórico (5 últimas)
 if busca:
-    # Adiciona ao histórico se for uma busca nova
     if busca not in st.session_state.historico:
         st.session_state.historico.insert(0, busca)
-        # Mantém apenas os 5 últimos
         st.session_state.historico = st.session_state.historico[:5]
 
-# Exibir botões do histórico
+# Exibir histórico como botões clicáveis
 if st.session_state.historico:
     st.write("🕒 **Buscas recentes:**")
-    # Cria colunas para os botões do histórico
     cols = st.columns(len(st.session_state.historico))
     for i, termo in enumerate(st.session_state.historico):
-        if cols[i].button(termo, key=f"btn_hist_{i}"):
-            # Ao clicar, o Streamlit recarrega e podemos usar esse valor
-            st.info(f"Refazendo busca por: {termo}")
+        if cols[i].button(termo, key=f"h_{i}"):
+            # Ao clicar, fazemos a busca por esse termo
             busca = termo
 
 st.divider()
@@ -57,4 +53,9 @@ if busca and service:
     try:
         query = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
         res = service.files().list(q=query, fields="files(id, name, webViewLink)").execute()
-        arquivos = res.
+        arquivos = res.get('files', [])
+
+        if arquivos:
+            st.write(f"### Resultados para: {busca}")
+            for arq in arquivos:
+                col_arq, col_link = st.columns
