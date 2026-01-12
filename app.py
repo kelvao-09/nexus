@@ -4,25 +4,38 @@ from googleapiclient.discovery import build
 
 st.set_page_config(page_title="Oráculo", layout="wide")
 
-# INJEÇÃO DIRETA: Gatinho que segue o mouse via JS Simples (Testado para Streamlit)
+# CSS PURO: Gatinho fixo na lateral e Bola flutuante
 st.markdown("""
-    <div id="cat-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:10000;">
-        <div id="moving-cat" style="position:absolute; font-size:40px; transition: transform 0.1s linear;">🐈</div>
-    </div>
-    <script>
-        const container = window.parent.document;
-        const cat = document.getElementById('moving-cat');
-        container.addEventListener('mousemove', (e) => {
-            const x = e.clientX;
-            const y = e.clientY;
-            cat.style.transform = `translate(${x + 10}px, ${y + 10}px)`;
-        });
-    </script>
     <style>
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        .magic-ball { font-size: 70px; text-align: center; animation: float 3s infinite; margin-top: 30px; }
-        .stApp { cursor: default; }
+        /* O Gatinho na lateral direita */
+        .gatinho-fixo {
+            position: fixed;
+            right: -10px;
+            bottom: 50px;
+            font-size: 60px;
+            z-index: 9999;
+            transform: rotate(-15deg);
+            filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.2));
+        }
+
+        /* Animação da Bola 🔮 */
+        @keyframes flutua { 
+            0%, 100% { transform: translateY(0); } 
+            50% { transform: translateY(-20px); } 
+        }
+        .bola { 
+            font-size: 80px; 
+            text-align: center; 
+            animation: flutua 3s infinite; 
+            margin-bottom: 20px;
+        }
+
+        /* Esconder menus do Streamlit para ficar limpo */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
     </style>
+    
+    <div class="gatinho-fixo">🐈‍⬛</div>
 """, unsafe_allow_html=True)
 
 # 2. CONEXÃO DRIVE
@@ -39,7 +52,7 @@ def get_drive():
 drive_service = get_drive()
 
 # 3. INTERFACE
-st.markdown('<div class="magic-ball">🔮</div>', unsafe_allow_html=True)
+st.markdown('<div class="bola">🔮</div>', unsafe_allow_html=True)
 st.markdown("<h1 style='text-align:center;'>O Oráculo</h1>", unsafe_allow_html=True)
 
 if 'h' not in st.session_state: st.session_state.h = []
@@ -52,8 +65,4 @@ if busca:
     
     if drive_service:
         try:
-            q = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
-            res = drive_service.files().list(q=q, fields="files(name, webViewLink)").execute()
-            for f in res.get('files', []):
-                st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
-        except: st.error("Erro na busca.")
+            q = f"name contains '{busca
