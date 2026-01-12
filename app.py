@@ -4,9 +4,6 @@ from googleapiclient.discovery import build
 
 st.set_page_config(page_title="Oráculo", page_icon="🔮")
 
-# O SEU ID CONFIGURADO
-ID_PASTA_RAIZ = "1_NSyolW53RP-vys0rz3s78LchlfmI7eq" 
-
 @st.cache_resource
 def get_drive_service():
     try:
@@ -23,19 +20,16 @@ def get_drive_service():
 service = get_drive_service()
 
 st.title("🔮 Oráculo")
-busca = st.text_input("O que deseja consultar?", placeholder="Ex: Manual de Redes")
+busca = st.text_input("O que deseja consultar?", placeholder="Ex: Manual")
 
 if busca and service:
     try:
-        # QUERY: Busca arquivos pelo nome, ignora pastas e olha dentro da pasta raiz
-        query = (f"name contains '{busca}' and "
-                 f"'{ID_PASTA_RAIZ}' in parents and "
-                 f"mimeType != 'application/vnd.google-apps.folder' and "
-                 f"trashed = false")
+        # Removi a trava de 'parents' para testar o acesso total
+        query = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
         
         results = service.files().list(
             q=query,
-            fields="files(id, name, webViewLink, mimeType)",
+            fields="files(id, name, webViewLink)",
             pageSize=10
         ).execute()
         
@@ -44,29 +38,16 @@ if busca and service:
         if arquivos:
             st.write(f"### ✅ Documentos encontrados:")
             for arq in arquivos:
-                with st.expander(f"📄 {arq['name']}", expanded=True):
-                    url = arq['webViewLink']
-                    
-                    # O segredo para abrir o documento diretamente está no webViewLink
-                    st.markdown(f"""
-                        <a href="{url}" target="_blank" style="text-decoration: none;">
-                            <div style="
-                                background-color: #4285F4;
-                                color: white;
-                                padding: 10px;
-                                text-align: center;
-                                border-radius: 5px;
-                                font-weight: bold;
-                                cursor: pointer;
-                            ">
-                                Visualizar Documento Agora ↗️
-                            </div>
+                st.markdown(f"""
+                    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px; background-color:#f9f9f9">
+                        <p style='margin:0'><strong>{arq['name']}</strong></p>
+                        <a href="{arq['webViewLink']}" target="_blank" style="color: #4285F4; text-decoration: none; font-weight: bold;">
+                            Abrir Documento Agora ↗️
                         </a>
-                    """, unsafe_allow_html=True)
+                    </div>
+                """, unsafe_allow_html=True)
         else:
-            st.warning("Nenhum documento encontrado com esse nome.")
+            st.warning("O Oráculo não encontrou nenhum arquivo com esse nome. Verifique se o arquivo foi compartilhado com o e-mail da API.")
             
     except Exception as e:
         st.error(f"Erro na busca: {e}")
-else:
-    st.info("Digite um termo para pesquisar.")
