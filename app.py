@@ -1,20 +1,36 @@
 import streamlit as st
+import google.generativeai as genai
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-st.set_page_config(page_title="Oráculo", layout="wide")
 
-# Frase "Esperar é Caminhar" com efeito DVD Bounce
-st.markdown('<style>@keyframes bounceX {0% {left:0;} 100% {left:calc(100% - var(--w));}} @keyframes bounceY {0% {top:0;} 100% {top:calc(100% - var(--h));}} .bouncing-text {position:fixed;font-size:30px;font-weight:bold;color:#FFF;background-color:#000;padding:10px;white-space:nowrap;animation:bounceX 7s linear infinite alternate, bounceY 5s linear infinite alternate;z-index:999;--w:300px;--h:50px;display:inline-block;}@media (max-width:600px){.bouncing-text{font-size:20px;--w:200px;--h:40px;}}@keyframes f{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}.b{font-size:70px;text-align:center;animation:f 3s infinite;}</style><div class="bouncing-text">Esperar é Caminhar</div>', unsafe_allow_html=True)
+st.set_page_config(page_title="O Oráculo", layout="wide")
 
-@st.cache_resource
-def get_s():
- if "google_auth" in st.secrets:
-  return build('drive','v3',credentials=service_account.Credentials.from_service_account_info(st.secrets["google_auth"],scopes=['https://www.googleapis.com/auth/drive.readonly']))
- return None
-s=get_s()
-st.markdown('<div class="b">🔮</div><h2 style="text-align:center;">O Oráculo</h2>',unsafe_allow_html=True)
-q=st.text_input("S",placeholder="Busque...",label_visibility="collapsed")
-if q and s:
- r=s.files().list(q=f"name contains '{q}' and trashed=false",fields="files(name,webViewLink,mimeType)").execute().get('files',[])
- for i in r:
-  if 'folder' not in i['mimeType']:st.markdown(f"📄 **[{i['name']}]({i['webViewLink']})**")
+# 1. CONFIGURAÇÃO IA (Coloque sua API KEY do Google AI Studio nos Secrets)
+if "gemini_api" in st.secrets:
+    genai.configure(api_key=st.secrets["gemini_api"])
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+# 2. ESTILO E DVD BOUNCE
+st.markdown('<style>.dvd{position:fixed;font-size:18px;font-weight:bold;color:#FFF;background:#000;padding:8px;z-index:999;animation:bX 7s linear infinite alternate,bY 5s linear infinite alternate;}@keyframes bX{0%{left:0}100%{left:calc(100% - 200px)}}@keyframes bY{0%{top:0}100%{top:calc(100% - 40px)}}</style><div class="dvd">Esperar é Caminhar</div>', unsafe_allow_html=True)
+
+# 3. INTERFACE
+st.markdown('<h1 style="text-align:center;">O Oráculo</h1>', unsafe_allow_html=True)
+st.image("https://lh3.googleusercontent.com/rd-gg-dl/ABS2GSmNEX0Dw0uBJnn9_Hu8tEI4Z14i4rC4Im0Ko5lZ9ojchlG4aV_wxRZ4UEr79bY8Mqaju8oxTGjO1fbO_WwXv4zZaFshmSnkQyh8ahM6ItEDyGh6fjLnJWP5mVyxPQAuBRz5w4GtPHb0fTG1OGTdDqfmbjlpT5angjjW4VyvNLUmnMgeR3ODazEesTwevvX0gpR3w9thS089Xr3hnJTLkaG1aslhVw1hlGYeGOmiRWtQmrmnsxPGMUTVH8PyoyKAuiKsHkGk1lJZ6140NI5BL7di1dcpMfVmsF2li_tkETXUfMNybqciC-p_zCMu38m7VRAym4yyjnCpym-kPCcM0vUED2e7GBodvQ41f97AauzrTFfNTIoaTtoqmLs-hPRi3Hp401ePE2Q7ZdBjPstoiBHqps5cUOeNMIj9mrj4MJC4Lp6n4CMkQDtVXxUAIjhMMaRTNDc6WGeueccUlm7ieu0BYPQE-SeuVHA1ghLPziVOua-2GOlFMsrWY-vmHkRHtgEBcDg4GsQU3bWbQFx_DaYq5_hmJ9SAi_EssTujs_Law3rFnEpHS59Xd-hVD2wbZL_CDsL1MXLk5_W_HpZJro2Xf1yfYw0lCo3Hd-cmZUu2EkbKRAWYpJx5IcqzUG5nWtpSODZ2TbwiGCgVcXVT55x9ae03NPB2IRWdGTSWm2Stx4q-JKSb38IRpOYdP40hZF5X8suxC0c4ZYbIUu9SvLyIJDuHjxNrxnIMMqW6CCeleev2AKcDwyOPSgBFcJxT8ZoZSYzwJhi7q1iUP4pNgUAGSyBI3leRgNtTBImvw07wEiZ-aEtwB-Y1b2IKtIFkoWEb-LOdf9z_kCoKXDHvk14wEfo4WClHogxwfMsVd5jkwTdrTiYdMOQ3rf7Sddns4JKE_4ckmd3qjFahDQONykYfPSDLPQb0OLOxx6IU_2DAqC0BgIRe7QdUPZqvNkgn0alzLmsFpxMq0X6vhPonZnkDc8OLPF6bdcPKCMY8tD-fNK0ZCzy3ngqGR0gwubkq444prYr_jMdZaPK_NDuzT4n8jeAxhIYhQex4mtnVTxVyoytwF5239ABPvxqBE_1EhDEE-wiuxDiV1wlse4eUK0l_6FK_lcW47oOD-XruT1vAG-MJiGveU1hzWU6RESeODo-f_gOBND_hiMlHEh2AbGfWeCzX7EX4dxOv70oo59NzbHs2y4KFq0I=s1024-rj", width=250)
+
+# 4. ÁREA DO CHAT
+st.divider()
+st.subheader("💬 Converse com o Conhecimento")
+user_q = st.text_input("Pergunta sobre o documento:", placeholder="Ex: O que este contrato diz sobre prazos?")
+
+if user_q:
+    with st.spinner("O Oráculo está pensando..."):
+        # Aqui simulamos a leitura. Para ler PDF real, precisaríamos da biblioteca PyPDF2
+        # Mas para começar, vamos dar um contexto fixo ou o nome dos arquivos achados
+        contexto = "Você é o assistente do Oráculo. Responda de forma sábia e curta."
+        response = model.generate_content(f"Contexto: {contexto}\n\nPergunta: {user_q}")
+        st.chat_message("assistant").write(response.text)
+
+st.divider()
+# 5. BUSCA DE ARQUIVOS (Seu código original de busca)
+q = st.text_input("🔍 Buscar Arquivos", placeholder="Nome do arquivo...", label_visibility="collapsed")
+# ... (restante do código de busca do Drive aqui)
