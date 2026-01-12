@@ -2,6 +2,8 @@ import streamlit as st
 import google.generativeai as genai
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import io
+import PyPDF2
 
 # Configs
 ak, au = st.secrets.get("gemini_api"), st.secrets.get("google_auth")
@@ -24,23 +26,33 @@ with t1:
             st.write(f"📄 {i['name']}")
             if st.button("Ler", key=i['id']):
                 try:
-                    # Tenta exportar como texto puro (funciona para Google Docs)
-                    m = s.files().export(fileId=i['id'], mimeType='text/plain').execute()
-                    st.session_state.txt = m.decode('utf-8')
-                    st.success("Lido com sucesso!")
-                except:
-                    try:
-                        # Tenta baixar direto (funciona para arquivos .txt)
+                    mType = i.get('mimeType', '')
+                    # 1. Se for Google Doc
+                    if "google-apps.document" in mType:
+                        m = s.files().export(fileId=i['id'], mimeType='text/plain').execute()
+                        st.session_state.txt = m.decode('utf-8')
+                    # 2. Se for PDF
+                    elif "pdf" in mType:
+                        m = s.files().get_media(fileId=i['id']).execute()
+                        pdf_reader = PyPDF2.PdfReader(io.BytesIO(m))
+                        texto_pdf = ""
+                        for page in pdf_reader.pages:
+                            texto_pdf += page.extract_text()
+                        st.session_state.txt = texto_pdf
+                    # 3. Se for TXT ou outro
+                    else:
                         m = s.files().get_media(fileId=i['id']).execute()
                         st.session_state.txt = m.decode('utf-8')
-                        st.success("Lido com sucesso!")
-                    except:
-                        st.error("Formato incompatível (tente Google Docs ou .txt)")
+                    
+                    st.success("Lido com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro: {e}")
 
 with t2:
     if st.session_state.txt:
-        p = st.chat_input("Dúvida?")
+        p = st.chat_input("Dúvida sobre o documento?")
         if p:
-            r = md.generate_content(f"Doc: {st.session_state.txt[:5000]}\n\nPergunta: {p}")
+            # Enviamos o texto como contexto para o Oráculo
+            r = md.generate_content(f"Contexto: {st.session_state.txt[:10000]}\n\nPergunta: {p}")
             st.chat_message("assistant").write(r.text)
     else: st.warning("Leia um arquivo primeiro.")
