@@ -1,49 +1,44 @@
 import streamlit as st
-import os
-import base64
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
 st.set_page_config(page_title="Oráculo", page_icon="🔮")
 
-st.title("🔮 Oráculo de Documentos")
+# --- COLOQUE O ID DA SUA PASTA AQUI ---
+ID_PASTA_RAIZ = "SEU_ID_AQUI" 
 
-PASTA_DOCS = "documentos"
+@st.cache_resource
+def get_drive_service():
+    # Carrega as credenciais dos Secrets
+    creds_info = st.secrets["google_auth"]
+    creds = service_account.Credentials.from_service_account_info(
+        creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
+    )
+    return build('drive', 'v3', credentials=creds)
 
-# Função para ler o arquivo e criar um link de visualização
-def gerar_link_visualizacao(caminho_arquivo, nome_arquivo):
-    with open(caminho_arquivo, "rb") as f:
-        dados = f.read()
+service = get_drive_service()
+
+st.title("🔮 Oráculo")
+busca = st.text_input("Qual o problema ou documento?", placeholder="Ex: lentidão")
+
+if busca and service:
+    # A query busca em qualquer lugar do Drive que a conta tenha acesso
+    # Se quiser restringir a uma pasta, mantenha o ID_PASTA_RAIZ
+    query = f"name contains '{busca}' and trashed = false"
     
-    # Converte o arquivo para base64
-    base64_pdf = base64.b64encode(dados).decode('utf-8')
+    results = service.files().list(
+        q=query,
+        fields="files(id, name, webViewLink, mimeType)"
+    ).execute()
     
-    # Determina o tipo de arquivo (PDF ou Texto/Imagem)
-    if nome_arquivo.lower().endswith('.pdf'):
-        tipo = "application/pdf"
+    arquivos = results.get('files', [])
+
+    if arquivos:
+        for arq in arquivos:
+            with st.container():
+                st.markdown(f"### 📄 {arq['name']}")
+                # Link para abrir diretamente
+                st.markdown(f'<a href="{arq["webViewLink"]}" target="_blank">Clique aqui para abrir o documento</a>', unsafe_allow_html=True)
+                st.divider()
     else:
-        tipo = "application/octet-stream"
-
-    # Cria um link HTML que abre o arquivo em uma nova aba
-    href = f'<a href="data:{tipo};base64,{base64_pdf}" target="_blank" style="text-decoration: none;">' \
-           f'<div style="background-color: #4CAF50; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 10px;">' \
-           f'📄 Abrir: {nome_arquivo}</div></a>'
-    return href
-
-busca = st.text_input("O que você deseja encontrar?", placeholder="Ex: lentidão...")
-
-if busca:
-    if os.path.exists(PASTA_DOCS):
-        arquivos = os.listdir(PASTA_DOCS)
-        resultados = [f for f in arquivos if busca.lower() in f.lower()]
-        
-        if resultados:
-            st.write(f"### ✅ Resultados encontrados:")
-            for nome_arquivo in resultados:
-                caminho_completo = os.path.join(PASTA_DOCS, nome_arquivo)
-                
-                # Gera o botão/link que abre o arquivo
-                link_html = gerar_link_visualizacao(caminho_completo, nome_arquivo)
-                st.markdown(link_html, unsafe_allow_html=True)
-        else:
-            st.warning("Nenhum documento encontrado.")
-    else:
-        st.error("Pasta 'documentos' não encontrada.")
+        st.warning("Nada encontrado.")
