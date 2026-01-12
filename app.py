@@ -31,6 +31,13 @@ st.markdown("""
         display: inline-block;
         text-align: center;
     }
+    /* Estilo para o menu ⋮ */
+    .stPopover button {
+        border: none !important;
+        background: transparent !important;
+        padding: 0px !important;
+        font-size: 20px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -64,12 +71,4 @@ with st.sidebar:
     st.divider()
 
     # Listagem de Pastas
-    lista_pastas = list(st.session_state.pastas_fav.keys())
-    for pasta in lista_pastas:
-        col_n, col_m = st.columns([0.8, 0.2])
-        
-        with col_n:
-            exp = st.expander(f"📁 {pasta}")
-        
-        with col_m:
-            with st.popover("⋮"):
+    lista_pastas = list(st.session_state.pastas
