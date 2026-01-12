@@ -7,6 +7,18 @@ import io, PyPDF2
 # --- CONFIGS ---
 ak, au = st.secrets.get("gemini_api"), st.secrets.get("google_auth")
 if ak: genai.configure(api_key=ak)
+
+@st.cache_resource
+def detectar_modelo():
+    try:
+        # Busca na sua conta quais modelos aceitam gerar conteúdo
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                return m.name
+    except: return None
+    return None
+
+modelo_valido = detectar_modelo()
 if "txt" not in st.session_state: st.session_state.txt = ""
 
 st.title("O Oráculo")
@@ -33,21 +45,18 @@ with t1:
                         st.session_state.txt = "".join([p.extract_text() for p in pdf.pages])
                     else:
                         st.session_state.txt = m.decode('utf-8')
-                    st.success("Lido!")
+                    st.success(f"Lido! (IA: {modelo_valido})")
                 except Exception as e: st.error(f"Erro: {e}")
 
 with t2:
-    if st.session_state.txt:
+    if st.session_state.txt and modelo_valido:
         p = st.chat_input("Dúvida?")
         if p:
-            # Tenta um modelo, se der 404, tenta o outro
-            for m_name in ['gemini-1.5-flash', 'gemini-pro']:
-                try:
-                    md = genai.GenerativeModel(m_name)
-                    r = md.generate_content(f"Doc: {st.session_state.txt[:8000]}\n\nPergunta: {p}")
-                    st.chat_message("assistant").write(r.text)
-                    break 
-                except Exception as e:
-                    if "404" in str(e) and m_name == 'gemini-1.5-flash': continue
-                    else: st.error(f"Erro na IA: {e}"); break
+            try:
+                md = genai.GenerativeModel(modelo_valido)
+                r = md.generate_content(f"Doc: {st.session_state.txt[:8000]}\n\nPergunta: {p}")
+                st.chat_message("assistant").write(r.text)
+            except Exception as e: st.error(f"Erro na IA: {e}")
+    elif not modelo_valido:
+        st.error("Nenhum modelo compatível encontrado nesta chave API.")
     else: st.warning("Leia um arquivo primeiro.")
