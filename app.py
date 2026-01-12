@@ -1,19 +1,34 @@
 import streamlit as st
 import os
+import base64
 
-# CONFIGURAÇÕES INICIAIS
 st.set_page_config(page_title="Oráculo", page_icon="🔮")
-
-# --- AJUSTE ESTES DADOS ---
-# Substitua pelo seu usuário e nome do repositório no GitHub
-USUARIO_GITHUB = "seu-usuario"
-REPOSITORIO_GITHUB = "nome-do-seu-repo"
-PASTA_DOCS = "documentos"
-# --------------------------
 
 st.title("🔮 Oráculo de Documentos")
 
-busca = st.text_input("O que você deseja encontrar?", placeholder="Digite aqui...")
+PASTA_DOCS = "documentos"
+
+# Função para ler o arquivo e criar um link de visualização
+def gerar_link_visualizacao(caminho_arquivo, nome_arquivo):
+    with open(caminho_arquivo, "rb") as f:
+        dados = f.read()
+    
+    # Converte o arquivo para base64
+    base64_pdf = base64.b64encode(dados).decode('utf-8')
+    
+    # Determina o tipo de arquivo (PDF ou Texto/Imagem)
+    if nome_arquivo.lower().endswith('.pdf'):
+        tipo = "application/pdf"
+    else:
+        tipo = "application/octet-stream"
+
+    # Cria um link HTML que abre o arquivo em uma nova aba
+    href = f'<a href="data:{tipo};base64,{base64_pdf}" target="_blank" style="text-decoration: none;">' \
+           f'<div style="background-color: #4CAF50; color: white; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 10px;">' \
+           f'📄 Abrir: {nome_arquivo}</div></a>'
+    return href
+
+busca = st.text_input("O que você deseja encontrar?", placeholder="Ex: lentidão...")
 
 if busca:
     if os.path.exists(PASTA_DOCS):
@@ -21,34 +36,14 @@ if busca:
         resultados = [f for f in arquivos if busca.lower() in f.lower()]
         
         if resultados:
-            st.write(f"### ✅ Encontrei {len(resultados)} resultado(s):")
-            
+            st.write(f"### ✅ Resultados encontrados:")
             for nome_arquivo in resultados:
-                # Criamos o link oficial do GitHub para "Visualização Direta" (Raw)
-                # Esse link faz o navegador abrir o PDF ou imagem em vez de baixar
-                url_github = f"https://github.com/{USUARIO_GITHUB}/{REPOSITORIO_GITHUB}/blob/main/{PASTA_DOCS}/{nome_arquivo}"
+                caminho_completo = os.path.join(PASTA_DOCS, nome_arquivo)
                 
-                # Criamos um botão visual que abre o link
-                st.markdown(f"""
-                    <a href="{url_github}" target="_blank" style="text-decoration: none;">
-                        <div style="
-                            background-color: #4CAF50;
-                            color: white;
-                            padding: 10px 20px;
-                            text-align: center;
-                            border-radius: 5px;
-                            margin: 5px 0;
-                            cursor: pointer;
-                            display: inline-block;
-                            font-weight: bold;
-                        ">
-                            📄 Abrir documento: {nome_arquivo}
-                        </div>
-                    </a>
-                """, unsafe_allow_html=True)
+                # Gera o botão/link que abre o arquivo
+                link_html = gerar_link_visualizacao(caminho_completo, nome_arquivo)
+                st.markdown(link_html, unsafe_allow_html=True)
         else:
             st.warning("Nenhum documento encontrado.")
     else:
-        st.error("Pasta de documentos não encontrada.")
-else:
-    st.info("Digite uma palavra-chave para começar.")
+        st.error("Pasta 'documentos' não encontrada.")
