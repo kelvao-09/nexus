@@ -2,15 +2,11 @@ import streamlit as st
 import google.generativeai as genai
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-import io
-import PyPDF2
+import io, PyPDF2
 
-# Configs
+# --- CONFIGS ---
 ak, au = st.secrets.get("gemini_api"), st.secrets.get("google_auth")
-if ak:
-    genai.configure(api_key=ak)
-    md = genai.GenerativeModel('gemini-1.5-flash')
-
+if ak: genai.configure(api_key=ak)
 if "txt" not in st.session_state: st.session_state.txt = ""
 
 st.title("O Oráculo")
@@ -26,33 +22,32 @@ with t1:
             st.write(f"📄 {i['name']}")
             if st.button("Ler", key=i['id']):
                 try:
-                    mType = i.get('mimeType', '')
-                    # 1. Se for Google Doc
-                    if "google-apps.document" in mType:
+                    tp = i.get('mimeType', '')
+                    if "document" in tp:
                         m = s.files().export(fileId=i['id'], mimeType='text/plain').execute()
-                        st.session_state.txt = m.decode('utf-8')
-                    # 2. Se for PDF
-                    elif "pdf" in mType:
-                        m = s.files().get_media(fileId=i['id']).execute()
-                        pdf_reader = PyPDF2.PdfReader(io.BytesIO(m))
-                        texto_pdf = ""
-                        for page in pdf_reader.pages:
-                            texto_pdf += page.extract_text()
-                        st.session_state.txt = texto_pdf
-                    # 3. Se for TXT ou outro
                     else:
                         m = s.files().get_media(fileId=i['id']).execute()
-                        st.session_state.txt = m.decode('utf-8')
                     
-                    st.success("Lido com sucesso!")
-                except Exception as e:
-                    st.error(f"Erro: {e}")
+                    if "pdf" in tp:
+                        pdf = PyPDF2.PdfReader(io.BytesIO(m))
+                        st.session_state.txt = "".join([p.extract_text() for p in pdf.pages])
+                    else:
+                        st.session_state.txt = m.decode('utf-8')
+                    st.success("Lido!")
+                except Exception as e: st.error(f"Erro: {e}")
 
 with t2:
     if st.session_state.txt:
-        p = st.chat_input("Dúvida sobre o documento?")
+        p = st.chat_input("Dúvida?")
         if p:
-            # Enviamos o texto como contexto para o Oráculo
-            r = md.generate_content(f"Contexto: {st.session_state.txt[:10000]}\n\nPergunta: {p}")
-            st.chat_message("assistant").write(r.text)
+            # Tenta um modelo, se der 404, tenta o outro
+            for m_name in ['gemini-1.5-flash', 'gemini-pro']:
+                try:
+                    md = genai.GenerativeModel(m_name)
+                    r = md.generate_content(f"Doc: {st.session_state.txt[:8000]}\n\nPergunta: {p}")
+                    st.chat_message("assistant").write(r.text)
+                    break 
+                except Exception as e:
+                    if "404" in str(e) and m_name == 'gemini-1.5-flash': continue
+                    else: st.error(f"Erro na IA: {e}"); break
     else: st.warning("Leia um arquivo primeiro.")
