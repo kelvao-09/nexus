@@ -2,38 +2,37 @@ import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# 1. Configuração da Página
 st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 
-# Inicializar favoritos
-if 'favoritos' not in st.session_state:
-    st.session_state.favoritos = []
+# 1. INICIALIZAR ESTRUTURA DE PASTAS (Memória da Sessão)
+if 'pastas_fav' not in st.session_state:
+    # Estrutura inicial: Geral e uma lista de nomes de pastas
+    st.session_state.pastas_fav = {"Geral": []}
 
-# 2. Estilo CSS
+# 2. ESTILO CSS
 st.markdown("""
 <style>
-    .main { background-color: #f8f9fa; }
-    .fav-card {
+    .fav-item {
         background: #ffffff;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border-left: 5px solid #FFD700;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        border-left: 3px solid #FFD700;
+        font-size: 13px;
     }
     .btn-open {
         background-color: #4285F4;
         color: white !important;
-        padding: 8px 15px;
+        padding: 5px 10px;
         border-radius: 5px;
         text-decoration: none;
         font-weight: bold;
-        display: inline-block;
+        font-size: 12px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Autenticação Drive
+# 3. AUTENTICAÇÃO DRIVE
 @st.cache_resource
 def get_drive_service():
     try:
@@ -42,55 +41,43 @@ def get_drive_service():
             creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
         )
         return build('drive', 'v3', credentials=creds)
-    except:
-        return None
+    except: return None
 
 service = get_drive_service()
 
-# 4. Sidebar de Favoritos
+# 4. SIDEBAR: ORGANIZAÇÃO EM PASTAS
 with st.sidebar:
-    st.header("⭐ Favoritos")
-    if not st.session_state.favoritos:
-        st.write("Nenhum favorito salvo.")
-    else:
-        for fav in st.session_state.favoritos:
-            st.markdown(f'<div class="fav-card"><b>{fav["name"]}</b><br><a href="{fav["link"]}" target="_blank" style="font-size:12px; color:#4285F4;">Ver Documento</a></div>', unsafe_allow_html=True)
-        if st.button("Limpar Lista"):
-            st.session_state.favoritos = []
+    st.header("📂 Pastas de Favoritos")
+    
+    # Criar Nova Pasta
+    nova_pasta = st.text_input("Nome da nova pasta:")
+    if st.button("Criar Pasta") and nova_pasta:
+        if nova_pasta not in st.session_state.pastas_fav:
+            st.session_state.pastas_fav[nova_pasta] = []
             st.rerun()
 
-# 5. Busca Principal
-st.markdown("<h1 style='text-align: center;'>🔮 O Oráculo</h1>", unsafe_allow_html=True)
+    st.divider()
+
+    # Exibição das Pastas e Conteúdo
+    for pasta, itens in st.session_state.pastas_fav.items():
+        with st.expander(f"📁 {pasta} ({len(itens)})"):
+            if not itens:
+                st.write("Vazia")
+            for item in itens:
+                st.markdown(f'<div class="fav-item"><b>{item["name"]}</b><br><a href="{item["link"]}" target="_blank">Abrir ↗️</a></div>', unsafe_allow_html=True)
+            
+            if st.button(f"Esvaziar {pasta}", key=f"clear_{pasta}"):
+                st.session_state.pastas_fav[pasta] = []
+                st.rerun()
+
+# 5. BUSCA E RESULTADOS
+st.title("🔮 Oráculo")
 c1, c2, c3 = st.columns([1,2,1])
 with c2:
-    busca = st.text_input("", placeholder="O que você precisa encontrar?")
+    busca = st.text_input("Pesquisar documento:", placeholder="Ex: Manual...")
 
 if busca and service:
     try:
         q = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
         res = service.files().list(q=q, fields="files(id, name, webViewLink, mimeType)").execute()
-        files = res.get('files', [])
-
-        if files:
-            for i, f in enumerate(files):
-                # Determinar ícone
-                m = f['mimeType']
-                icon = "📕" if 'pdf' in m else "📗" if 'sheet' in m else "📘" if 'document' in m else "📄"
-                
-                with st.container():
-                    col_txt, col_fav, col_link = st.columns([6, 1, 1])
-                    with col_txt:
-                        st.markdown(f"#### {icon} {f['name']}")
-                    with col_fav:
-                        if st.button("⭐", key=f"f_{i}"):
-                            if not any(fav['id'] == f['id'] for fav in st.session_state.favoritos):
-                                st.session_state.favoritos.append({'id': f['id'], 'name': f['name'], 'link': f['webViewLink']})
-                                st.toast("Salvo nos favoritos!")
-                                st.rerun()
-                    with col_link:
-                        st.markdown(f'<a href="{f["webViewLink"]}" target="_blank" class="btn-open">Abrir</a>', unsafe_allow_html=True)
-                    st.divider()
-        else:
-            st.warning("Nada encontrado.")
-    except Exception as e:
-        st.error(f"Erro: {e}")
+        files = res.get
