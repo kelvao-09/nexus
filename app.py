@@ -3,11 +3,12 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 st.set_page_config(page_title="Oráculo", layout="wide")
-# Gatinho Fixo e Bola 🔮
+
+# CSS: Gatinho reposicionado para não ser cortado
 st.markdown("""<style>
-.cat{position:fixed;top:10px;left:10px;font-size:50px;z-index:99}
+.cat{position:fixed;bottom:20px;right:20px;font-size:60px;z-index:999;filter:drop-shadow(2px 2px 5px #aaa);}
 @keyframes f{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
-.b{font-size:70px;text-align:center;animation:f 3s infinite}
+.b{font-size:75px;text-align:center;animation:f 3s infinite;margin-top:20px;}
 </style><div class="cat">🐈‍⬛</div>""",unsafe_allow_html=True)
 
 @st.cache_resource
@@ -23,9 +24,9 @@ q=st.text_input("S",placeholder="O que busca?",label_visibility="collapsed")
 
 if q and s:
     try:
-        # Linha ultra curta para evitar corte
         f_q=f"name contains '{q}' and mimeType!='application/vnd.google-apps.folder' and trashed=false"
         res=s.files().list(q=f_q,fields="files(name,webViewLink)").execute()
-        for f in res.get('files',[]):
-            st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
-    except:st.error("Erro")
+        files=res.get('files',[])
+        if files:
+            for f in files: st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
+        else:
