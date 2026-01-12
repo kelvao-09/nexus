@@ -5,11 +5,11 @@ from googleapiclient.discovery import build
 # 1. Configuração da Página
 st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 
-# Inicializar estrutura de pastas na memória da sessão (evita erros de chave inexistente)
+# Inicializar estrutura de pastas
 if 'pastas_fav' not in st.session_state:
     st.session_state.pastas_fav = {"Geral": []}
 
-# 2. Estilo CSS Refinado (Garante visibilidade e estética)
+# 2. Estilo CSS
 st.markdown("""
 <style>
     .main { background-color: #f8f9fa; }
@@ -29,19 +29,11 @@ st.markdown("""
         text-decoration: none;
         font-weight: bold;
         display: inline-block;
-        text-align: center;
-    }
-    /* Estilo para o menu ⋮ não parecer um botão comum */
-    .stPopover button {
-        border: none !important;
-        background: transparent !important;
-        padding: 0px !important;
-        font-size: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Autenticação Drive (Com tratamento de erro silencioso)
+# 3. Autenticação Drive
 @st.cache_resource
 def get_drive_service():
     try:
@@ -51,15 +43,38 @@ def get_drive_service():
                 creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
             )
             return build('drive', 'v3', credentials=creds)
-    except Exception as e:
-        st.error(f"Erro na conexão com Google Drive: {e}")
+    except:
+        pass
     return None
 
 service = get_drive_service()
 
-# 4. Barra Lateral: Gestão de Pastas com Menu ⋮
+# 4. Barra Lateral (Pastas e Menu ⋮)
 with st.sidebar:
     st.title("📂 Favoritos")
     
-    # Criar nova pasta com popover para não poluir a tela
-    with
+    with st.popover("➕ Nova Pasta", use_container_width=True):
+        n_nome = st.text_input("Nome da pasta:")
+        if st.button("Criar"):
+            if n_nome and n_nome not in st.session_state.pastas_fav:
+                st.session_state.pastas_fav[n_nome] = []
+                st.rerun()
+    
+    st.divider()
+
+    for pasta in list(st.session_state.pastas_fav.keys()):
+        col_n, col_m = st.columns([0.8, 0.2])
+        
+        with col_n:
+            exp = st.expander(f"📁 {pasta}")
+        
+        with col_m:
+            with st.popover("⋮"):
+                st.write(f"Configurar")
+                novo_n = st.text_input("Renomear:", value=pasta, key=f"re_{pasta}")
+                if st.button("Salvar", key=f"sv_{pasta}"):
+                    st.session_state.pastas_fav[novo_n] = st.session_state.pastas_fav.pop(pasta)
+                    st.rerun()
+                if pasta != "Geral":
+                    if st.button("🗑️ Deletar", key=f"dl_{pasta}"):
+                        del st.session_state.pastas_fav
