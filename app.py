@@ -26,17 +26,21 @@ st.markdown("""
         border: 1px solid #E0E0E0 !important;
         box-shadow: 0 2px 10px rgba(0,0,0,0.03) !important;
     }
-    .tag-button {
-        display: inline-block;
-        padding: 5px 15px;
-        border-radius: 20px;
-        background: #E8EAED;
-        margin-right: 8px;
-        cursor: pointer;
+    div.stButton > button {
+        border-radius: 20px !important;
+        background-color: #E8EAED !important;
+        color: #5F6368 !important;
+        border: none !important;
+        padding: 4px 15px !important;
+        font-size: 0.85rem !important;
+    }
+    div.stButton > button:hover {
+        background-color: #4285F4 !important;
+        color: white !important;
     }
     .result-card {
         background: white;
-        padding: 1.5rem;
+        padding: 1.2rem;
         border-radius: 12px;
         margin-bottom: 1rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -52,6 +56,13 @@ st.markdown("""
         padding: 8px 20px;
         border-radius: 6px;
         font-weight: 500;
-        transition: 0.3s;
     }
-    .btn-visualizar:hover {
+</style>
+""", unsafe_allow_html=True)
+
+# 3. Autenticação Drive
+@st.cache_resource
+def get_drive_service():
+    try:
+        if "google_auth" in st.secrets:
+            creds = service_account.Credentials.from
