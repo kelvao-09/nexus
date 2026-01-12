@@ -5,11 +5,11 @@ from googleapiclient.discovery import build
 # 1. Configuração da Página
 st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 
-# Inicializar estrutura de pastas
+# Inicializar estrutura de pastas (Memória da Sessão)
 if 'pastas_fav' not in st.session_state:
     st.session_state.pastas_fav = {"Geral": []}
 
-# 2. Estilo CSS
+# 2. Estilo CSS para máxima sofisticação
 st.markdown("""
 <style>
     .main { background-color: #f8f9fa; }
@@ -29,6 +29,7 @@ st.markdown("""
         text-decoration: none;
         font-weight: bold;
         display: inline-block;
+        text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -54,7 +55,7 @@ with st.sidebar:
     st.title("📂 Favoritos")
     
     with st.popover("➕ Nova Pasta", use_container_width=True):
-        n_nome = st.text_input("Nome da pasta:")
+        n_nome = st.text_input("Nome da pasta:", key="input_new_folder")
         if st.button("Criar"):
             if n_nome and n_nome not in st.session_state.pastas_fav:
                 st.session_state.pastas_fav[n_nome] = []
@@ -62,7 +63,9 @@ with st.sidebar:
     
     st.divider()
 
-    for pasta in list(st.session_state.pastas_fav.keys()):
+    # Listagem de Pastas
+    lista_pastas = list(st.session_state.pastas_fav.keys())
+    for pasta in lista_pastas:
         col_n, col_m = st.columns([0.8, 0.2])
         
         with col_n:
@@ -70,11 +73,3 @@ with st.sidebar:
         
         with col_m:
             with st.popover("⋮"):
-                st.write(f"Configurar")
-                novo_n = st.text_input("Renomear:", value=pasta, key=f"re_{pasta}")
-                if st.button("Salvar", key=f"sv_{pasta}"):
-                    st.session_state.pastas_fav[novo_n] = st.session_state.pastas_fav.pop(pasta)
-                    st.rerun()
-                if pasta != "Geral":
-                    if st.button("🗑️ Deletar", key=f"dl_{pasta}"):
-                        del st.session_state.pastas_fav
