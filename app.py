@@ -2,35 +2,18 @@ import streamlit as st
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# 1. Configuração e Estilo
 st.set_page_config(page_title="Oráculo", page_icon="🔮", layout="wide")
+if 'h' not in st.session_state: st.session_state.h = []
 
-if 'h' not in st.session_state:
-    st.session_state.h = []
-
-# CSS: Levitação da Bola e Estilo dos Cards
+# CSS + Gatinho Oneko (Persegue o ponteiro)
 st.markdown("""
 <style>
     @keyframes mv {0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
     .flt {font-size:70px;text-align:center;animation:mv 3s infinite;}
-    .card {background:white;padding:12px;border-radius:10px;border:1px solid #EEE;margin-bottom:8px;}
-    #oneko { position: fixed; z-index: 9999; pointer-events: none; }
 </style>
+<script src="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@master/oneko.js"></script>
 """, unsafe_allow_html=True)
 
-# 2. O Gatinho que Persegue o Mouse (JavaScript Interativo)
-st.components.v1.html("""
-<script>
-(function() {
-  const script = document.createElement('script');
-  script.src = "https://raw.githubusercontent.com/adryd325/oneko.js/master/oneko.js";
-  script.onload = () => { /* O gatinho inicia automaticamente ao carregar o script */ };
-  document.head.appendChild(script);
-})();
-</script>
-""", height=0)
-
-# 3. Conexão Google Drive
 @st.cache_resource
 def get_s():
     try:
@@ -42,23 +25,30 @@ def get_s():
     return None
 
 s = get_s()
-
-# 4. Interface Principal
 st.markdown('<div class="flt">🔮</div>', unsafe_allow_html=True)
 st.markdown("<h2 style='text-align:center;'>O Oráculo</h2>", unsafe_allow_html=True)
 
 c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
-    q_in = st.text_input("Busca", placeholder="O que deseja encontrar?", label_visibility="collapsed")
+    q = st.text_input("S", placeholder="O que busca?", label_visibility="collapsed")
     if st.session_state.h:
         cols = st.columns(len(st.session_state.h) + 1)
         for i, t in enumerate(st.session_state.h):
-            if cols[i].button(t, key=f"h{i}"): q_in = t
+            if cols[i].button(t, key=f"h{i}"): q = t
         if cols[-1].button("🗑️"):
-            st.session_state.h = []
-            st.rerun()
+            st.session_state.h = []; st.rerun()
 
-# Lógica de Histórico Protegida contra SyntaxError
-if q_in:
-    if q_in not in st.session_state.h:
-        st.session_state.
+# Linha blindada contra cortes (Tudo em uma linha só para não quebrar)
+if q and q not in st.session_state.h: st.session_state.h.insert(0, q); st.session_state.h = st.session_state.h[:5]
+
+if q and s:
+    try:
+        filt = f"name contains '{q}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
+        res = s.files().list(q=filt, fields="files(id, name, webViewLink)").execute()
+        items = res.get('files', [])
+        if items:
+            st.write("---")
+            for f in items:
+                st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
+        else: st.info("Nada encontrado.")
+    except: st.error("Erro na busca.")
