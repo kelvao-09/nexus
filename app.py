@@ -3,44 +3,13 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 # 1. Configuração da Página
-st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
+st.set_page_config(page_title="Oráculo Simples", page_icon="🔮")
 
-# Inicializar estrutura de pastas
-if 'pastas_fav' not in st.session_state:
-    st.session_state.pastas_fav = {"Geral": []}
+# Inicializar o histórico na memória da sessão
+if 'historico' not in st.session_state:
+    st.session_state.historico = []
 
-# 2. Estilo CSS para máxima sofisticação
-st.markdown("""
-<style>
-    .main { background-color: #f8f9fa; }
-    .fav-item {
-        background: white;
-        padding: 12px;
-        border-radius: 10px;
-        margin-bottom: 8px;
-        border-left: 4px solid #4285F4;
-        box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
-    }
-    .btn-open {
-        background-color: #4285F4;
-        color: white !important;
-        padding: 8px 15px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: bold;
-        display: inline-block;
-        text-align: center;
-    }
-    .stPopover button {
-        border: none !important;
-        background: transparent !important;
-        padding: 0px !important;
-        font-size: 20px !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# 3. Autenticação Drive
+# 2. Autenticação Drive
 @st.cache_resource
 def get_drive_service():
     try:
@@ -56,9 +25,24 @@ def get_drive_service():
 
 service = get_drive_service()
 
-# 4. Barra Lateral (Pastas e Menu ⋮)
-with st.sidebar:
-    st.title("📂 Favoritos")
-    
-    with st.popover("➕ Nova Pasta", use_container_width=True):
-        n_nome = st.text_input("Nome da pasta:", key="new_f_input")
+# 3. Título Principal
+st.markdown("<h1 style='text-align: center;'>🔮 O Oráculo</h1>", unsafe_allow_html=True)
+
+# 4. Aba de Pesquisa
+# Criamos uma função para atualizar a busca quando clicar no histórico
+def pesquisar_termo(termo):
+    st.session_state.termo_atual = termo
+
+# Se não houver termo atual, começa vazio
+if 'termo_atual' not in st.session_state:
+    st.session_state.termo_atual = ""
+
+busca = st.text_input("O que você deseja encontrar?", value=st.session_state.termo_atual)
+
+# 5. Lógica do Histórico (As 5 últimas)
+if busca and busca not in st.session_state.historico:
+    # Adiciona ao início da lista e mantém apenas as 5 últimas
+    st.session_state.historico.insert(0, busca)
+    st.session_state.historico = st.session_state.historico[:5]
+
+if st.session_state.historico:
