@@ -5,11 +5,11 @@ from googleapiclient.discovery import build
 # 1. Configuração da Página
 st.set_page_config(page_title="Oráculo Pro", page_icon="🔮", layout="wide")
 
-# Inicializar estrutura de pastas se não existir
+# Inicializar estrutura de pastas na memória da sessão (evita erros de chave inexistente)
 if 'pastas_fav' not in st.session_state:
     st.session_state.pastas_fav = {"Geral": []}
 
-# 2. Estilo CSS
+# 2. Estilo CSS Refinado (Garante visibilidade e estética)
 st.markdown("""
 <style>
     .main { background-color: #f8f9fa; }
@@ -31,68 +31,35 @@ st.markdown("""
         display: inline-block;
         text-align: center;
     }
+    /* Estilo para o menu ⋮ não parecer um botão comum */
     .stPopover button {
         border: none !important;
         background: transparent !important;
+        padding: 0px !important;
         font-size: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Autenticação Drive
+# 3. Autenticação Drive (Com tratamento de erro silencioso)
 @st.cache_resource
 def get_drive_service():
     try:
-        creds_info = st.secrets["google_auth"]
-        creds = service_account.Credentials.from_service_account_info(
-            creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
-        )
-        return build('drive', 'v3', credentials=creds)
-    except:
-        return None
+        if "google_auth" in st.secrets:
+            creds_info = st.secrets["google_auth"]
+            creds = service_account.Credentials.from_service_account_info(
+                creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
+            )
+            return build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        st.error(f"Erro na conexão com Google Drive: {e}")
+    return None
 
 service = get_drive_service()
 
-# 4. Barra Lateral (Favoritos e Menu ⋮)
+# 4. Barra Lateral: Gestão de Pastas com Menu ⋮
 with st.sidebar:
     st.title("📂 Favoritos")
     
-    with st.popover("➕ Nova Pasta", use_container_width=True):
-        n_nome = st.text_input("Nome da pasta:")
-        if st.button("Criar"):
-            if n_nome and n_nome not in st.session_state.pastas_fav:
-                st.session_state.pastas_fav[n_nome] = []
-                st.rerun()
-    
-    st.divider()
-
-    for pasta in list(st.session_state.pastas_fav.keys()):
-        col_n, col_m = st.columns([0.85, 0.15])
-        
-        with col_n:
-            exp = st.expander(f"📁 {pasta}")
-        
-        with col_m:
-            with st.popover("⋮"):
-                st.write(f"Configurar: {pasta}")
-                novo_n = st.text_input("Renomear:", value=pasta, key=f"re_{pasta}")
-                if st.button("Salvar Nome", key=f"sv_{pasta}"):
-                    st.session_state.pastas_fav[novo_n] = st.session_state.pastas_fav.pop(pasta)
-                    st.rerun()
-                if pasta != "Geral":
-                    if st.button("🗑️ Deletar", key=f"dl_{pasta}"):
-                        del st.session_state.pastas_fav[pasta]
-                        st.rerun()
-        
-        with exp:
-            itens = st.session_state.pastas_fav[pasta]
-            if not itens:
-                st.caption("Pasta vazia")
-            else:
-                for idx, item in enumerate(itens):
-                    st.markdown(f'<div class="fav-item"><b>{item["name"]}</b><br><a href="{item["link"]}" target="_blank" style="font-size:11px; color:#4285F4; text-decoration:none;">Abrir ↗️</a></div>', unsafe_allow_html=True)
-                    
-                    c_mov, c_rem = st.columns([3, 1])
-                    with c_mov:
-                        # Bloco que estava causando erro corrigido aqui
-                        outras = [p for p in st.session_state.
+    # Criar nova pasta com popover para não poluir a tela
+    with
