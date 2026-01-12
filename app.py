@@ -4,31 +4,32 @@ from googleapiclient.discovery import build
 
 st.set_page_config(page_title="Oráculo", layout="wide")
 
-# CSS Compacto: Gatinho que balança e Bola 🔮
-st.markdown("""<style>
-@keyframes t{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
-.c{position:fixed;bottom:20px;right:25px;font-size:60px;z-index:999;animation:t 1.5s infinite;}
-@keyframes f{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+# Gatinho controlável por teclado (Setas)
+st.markdown("""
+<div id="c" tabindex="0" style="position:fixed;bottom:20px;right:20px;font-size:50px;z-index:999;outline:none;cursor:pointer;transition:0.1s;">🐈‍⬛</div>
+<script>
+const g = document.getElementById('c');
+let x=0, y=0;
+g.addEventListener('keydown', (e) => {
+    if(e.key=='ArrowUp') y-=20;
+    if(e.key=='ArrowDown') y+=20;
+    if(e.key=='ArrowLeft') x-=20;
+    if(e.key=='ArrowRight') x+=20;
+    g.style.transform = `translate(${x}px, ${y}px)`;
+    e.preventDefault();
+});
+</script>
+<style>
+@keyframes f{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
 .b{font-size:70px;text-align:center;animation:f 3s infinite;}
-</style><div class="c">🐈‍⬛</div>""",unsafe_allow_html=True)
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource
 def get_s():
     if "google_auth" in st.secrets:
-        creds=service_account.Credentials.from_service_account_info(st.secrets["google_auth"],scopes=['https://www.googleapis.com/auth/drive.readonly'])
-        return build('drive', 'v3', credentials=creds)
+        return build('drive','v3',credentials=service_account.Credentials.from_service_account_info(st.secrets["google_auth"],scopes=['https://www.googleapis.com/auth/drive.readonly']))
     return None
 
 s=get_s()
-st.markdown('<div class="b">🔮</div><h2 style="text-align:center;">Oráculo</h2>',unsafe_allow_html=True)
-q=st.text_input("S",placeholder="Busque aqui...",label_visibility="collapsed")
-
-# Lógica de busca comprimida para evitar cortes no arquivo
-if q and s:
-    try:
-        filt=f"name contains '{q}' and mimeType!='application/vnd.google-apps.folder' and trashed=false"
-        res=s.files().list(q=filt,fields="files(name,webViewLink)").execute().get('files',[])
-        if res:
-            for f in res: st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
-        else: st.info("Nada.")
-    except: st.error("Erro")
+st.markdown('<div
