@@ -4,53 +4,56 @@ from googleapiclient.discovery import build
 
 st.set_page_config(page_title="Oráculo", layout="wide")
 
-# ESTE BLOCO MUDA O CURSOR PARA UM GATINHO
+# INJEÇÃO DIRETA: Gatinho que segue o mouse via JS Simples (Testado para Streamlit)
 st.markdown("""
+    <div id="cat-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:10000;">
+        <div id="moving-cat" style="position:absolute; font-size:40px; transition: transform 0.1s linear;">🐈</div>
+    </div>
+    <script>
+        const container = window.parent.document;
+        const cat = document.getElementById('moving-cat');
+        container.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            cat.style.transform = `translate(${x + 10}px, ${y + 10}px)`;
+        });
+    </script>
     <style>
-        /* Define o gatinho como o cursor em toda a página */
-        html, body, [data-testid="stAppViewContainer"] {
-            cursor: url('https://cur.cursors-4u.net/anim/ani-11/ani1097.cur'), auto !important;
-        }
-        
-        /* Garante que o gatinho apareça mesmo sobre botões e inputs */
-        button, input, a, span {
-            cursor: url('https://cur.cursors-4u.net/anim/ani-11/ani1097.cur'), pointer !important;
-        }
-
-        @keyframes flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        .bola { font-size: 70px; text-align: center; animation: flutua 3s infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .magic-ball { font-size: 70px; text-align: center; animation: float 3s infinite; margin-top: 30px; }
+        .stApp { cursor: default; }
     </style>
 """, unsafe_allow_html=True)
 
 # 2. CONEXÃO DRIVE
 @st.cache_resource
-def g_srv():
+def get_drive():
     try:
         if "google_auth" in st.secrets:
-            s = st.secrets["google_auth"]
-            c = service_account.Credentials.from_service_account_info(s, scopes=['https://www.googleapis.com/auth/drive.readonly'])
-            return build('drive', 'v3', credentials=c)
+            info = st.secrets["google_auth"]
+            creds = service_account.Credentials.from_service_account_info(info, scopes=['https://www.googleapis.com/auth/drive.readonly'])
+            return build('drive', 'v3', credentials=creds)
     except: return None
     return None
 
-srv = g_srv()
+drive_service = get_drive()
 
 # 3. INTERFACE
-st.markdown('<div class="bola">🔮</div>', unsafe_allow_html=True)
+st.markdown('<div class="magic-ball">🔮</div>', unsafe_allow_html=True)
 st.markdown("<h1 style='text-align:center;'>O Oráculo</h1>", unsafe_allow_html=True)
 
 if 'h' not in st.session_state: st.session_state.h = []
-q = st.text_input("Busca", placeholder="O que busca?", label_visibility="collapsed")
+busca = st.text_input("S", placeholder="O que busca?", label_visibility="collapsed")
 
-if q:
-    if q not in st.session_state.h:
-        st.session_state.h.insert(0, q)
+if busca:
+    if busca not in st.session_state.h:
+        st.session_state.h.insert(0, busca)
         st.session_state.h = st.session_state.h[:5]
     
-    if srv:
+    if drive_service:
         try:
-            filt = f"name contains '{q}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
-            res = srv.files().list(q=filt, fields="files(name, webViewLink)").execute()
+            q = f"name contains '{busca}' and mimeType != 'application/vnd.google-apps.folder' and trashed = false"
+            res = drive_service.files().list(q=q, fields="files(name, webViewLink)").execute()
             for f in res.get('files', []):
                 st.markdown(f"📄 **[{f['name']}]({f['webViewLink']})**")
         except: st.error("Erro na busca.")
